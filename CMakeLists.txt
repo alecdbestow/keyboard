@@ -10,7 +10,6 @@ pico_sdk_init()
 #        -Werror
 #        )
 add_subdirectory(FatFs_SPI)
-add_subdirectory(pico-superkey-board-master)
 
 add_library(typer STATIC)
 target_include_directories(typer PUBLIC 
