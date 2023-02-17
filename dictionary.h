@@ -18,7 +18,7 @@ typedef struct dictionary
 void initDict(Dictionary *d, uint32_t start, uint32_t end);
 int readSd(Dictionary *d);
 void writeSd(Dictionary *d);
-void addTranslation(Dictionary *d, uint8_t *term, uint8_t *translation);
-void getTranslation(Dictionary *d, uint8_t *input, uint8_t *output);
+void addTranslation(Dictionary *d, char *term, char *translation);
+void getTranslation(Dictionary *d, char *input, char *output);
 uint64_t getPos(Dictionary *d, uint32_t hash);
 #endif
