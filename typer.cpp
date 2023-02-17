@@ -31,7 +31,7 @@
 #include "tusb.h"
 
 #include "usb_descriptors.h"
-#include "typer.hpp"
+#include "typer.h"
 
 
 //--------------------------------------------------------------------+

@@ -10,7 +10,7 @@ typedef struct dictionary
     uint32_t end;
     uint32_t pos;
     sd_card_t *pSD;
-    char buf[BLOCK_SIZE];
+    uint8_t buf[BLOCK_SIZE];
 } Dictionary;
 
 
@@ -18,7 +18,7 @@ typedef struct dictionary
 void initDict(Dictionary *d, uint32_t start, uint32_t end);
 int readSd(Dictionary *d);
 void writeSd(Dictionary *d);
-void addTranslation(Dictionary *d, char *term, char *translation);
-void getTranslation(Dictionary *d, char *input, char *output);
+void addTranslation(Dictionary *d, uint8_t *term, uint8_t *translation);
+void getTranslation(Dictionary *d, uint8_t *input, uint8_t *output);
 uint64_t getPos(Dictionary *d, uint32_t hash);
 #endif

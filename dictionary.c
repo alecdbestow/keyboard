@@ -7,7 +7,7 @@
 // Example of reading/writing an external serial flash using the PL022 SPI interface
 
 #include <stdio.h>
-#include "dictionary.hpp"
+#include "dictionary.h"
 #include "pico/stdlib.h"
 #include "FatFs_SPI/sd_driver/sd_card.h"
 #include "FatFs_SPI/sd_driver/hw_config.h"
@@ -72,13 +72,13 @@ void initDict(Dictionary *d, uint32_t start, uint32_t end) {
 
 void writeSd(Dictionary *d)  {
     
-    sd_write_blocks(d->pSD, (uint8_t *)d->buf, d->pos, 1);
+    sd_write_blocks(d->pSD, d->buf, d->pos, 1);
 }
 
 
 int readSd(Dictionary *d) {
     // Enable UART so we can print status output  
-    sd_read_blocks(d->pSD, (uint8_t *)d->buf, d->pos, 1);
+    sd_read_blocks(d->pSD, d->buf, d->pos, 1);
     return 0;
 }
 

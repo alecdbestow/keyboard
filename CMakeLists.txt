@@ -10,6 +10,7 @@ pico_sdk_init()
 #        -Werror
 #        )
 add_subdirectory(FatFs_SPI)
+add_subdirectory(pico-superkey-board-master)
 
 add_library(typer STATIC)
 target_include_directories(typer PUBLIC 
@@ -17,7 +18,7 @@ target_include_directories(typer PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/FatFs_SPI/sd_driver
 )
 target_sources(typer PUBLIC 
-    ${CMAKE_CURRENT_LIST_DIR}/typer.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/typer.c
     ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
 )
 target_link_libraries(typer PUBLIC pico_stdlib tinyusb_device tinyusb_board)
@@ -29,15 +30,15 @@ target_include_directories(dict INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/FatFs_SPI/sd_driver
 )
 target_sources(dict PUBLIC 
-    ${CMAKE_CURRENT_LIST_DIR}/dictionary.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/dictionary.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/dictionary.c
+    ${CMAKE_CURRENT_LIST_DIR}/dictionary.h
 )
 target_link_libraries(dict PUBLIC pico_stdlib FatFs_SPI)
 
 
 add_library(meta STATIC)
 target_sources(meta PUBLIC 
-    ${CMAKE_CURRENT_LIST_DIR}/meta.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/meta.c
 )
 target_link_libraries(meta PUBLIC pico_stdlib FatFs_SPI)
 
@@ -47,9 +48,7 @@ target_include_directories(typer PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/FatFs_SPI/sd_driver
 )
 target_sources(action_stream PUBLIC 
-    ${CMAKE_CURRENT_LIST_DIR}/action_stream.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/stroke.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/circap.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/action_stream.c
 )
 target_link_libraries(action_stream PUBLIC pico_stdlib dict meta)
 
@@ -57,7 +56,7 @@ target_link_libraries(action_stream PUBLIC pico_stdlib dict meta)
 
 add_executable(main)
 target_sources(main PUBLIC
-    ${CMAKE_CURRENT_LIST_DIR}/main.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/main.c
 )
 
 target_include_directories(main PUBLIC ${CMAKE_CURRENT_LIST_DIR})
