@@ -49,7 +49,7 @@ void initAction(Action *a)  {
     a->length = 0;
 }
 
-void initActionStream(ActionStream *a)  {
+void ActionStreamInit(ActionStream *a)  {
     initDict(&(a->d), 0, 150000*10);
     for (int i = 0; i < MAX_STORED_ACTIONS_LENGTH; i++) {
         initAction(&(a->actions[i]));
@@ -82,7 +82,7 @@ size_t getBounded(ActionStream *a, int i) {
     
 }
 
-void getCombinedStrokes(ActionStream *a, char* strokes, size_t start)  {
+void ActionStreamGetCombinedStrokes(ActionStream *a, char* strokes, size_t start)  {
     size_t stopPoint = getBounded(a, a->end + 1);
     size_t index = start;
     size_t len = lstrcpy(strokes, a->actions[start].stroke);
@@ -101,7 +101,7 @@ void addString(ActionStream *a, size_t index, uint8_t *pos, uint8_t *trans) {
     a->actions[index].length += lstrcpy(a->actions[index].translation + a->actions[index].length, trans);
 }
 
-void addStroke(ActionStream *a, Stroke stroke)   {
+void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
     a->end = (a->end + 1) % MAX_STORED_ACTIONS_LENGTH;
     memcpy(a->actions[a->end].stroke, stroke, NUM_STENO_KEYS);
     char trans[MAX_TRANSLATION_LENGTH];
@@ -115,7 +115,7 @@ void addStroke(ActionStream *a, Stroke stroke)   {
     for (index = getBounded(a, a->end - MAX_NUM_STROKES + 1); index != a->end; index = getBounded(a, index + 1))   {
         if (a->actions[index].translation)  {
 
-            getCombinedStrokes(a, combinedStrokes, index);
+            ActionStreamGetCombinedStrokes(a, combinedStrokes, index);
             getTranslation(&(a->d), combinedStrokes, trans);
             if (trans[0] != '\0')   {
                 
@@ -144,7 +144,7 @@ void addStroke(ActionStream *a, Stroke stroke)   {
     // if no translation found
 
 
-    compileOutput(a);
+    ActionStreamCompileOutput(a);
 }
 
 
@@ -166,7 +166,7 @@ bool outputOnce(ActionStream *a, bool checkIndex)    {
             a->ci.outIndex[0] = a->ci.actionIndex[0];
         }
         else if (a->ci.actionIndex[0] == '{')   {
-            outputCommand(a);
+            ActionStreamCommandOutput(a);
             return true;
         }
         else if (isalpha(a->ci.actionIndex[0])) {
@@ -258,7 +258,7 @@ void performCommandOutput(ActionStream *a, CompileMatch *match) {
     }
 }
 
-void outputCommand(ActionStream *a)    {
+void ActionStreamCommandOutput(ActionStream *a)    {
 
     CompileMatch *match = findMatch(a);
     bool outputted = false;
@@ -277,7 +277,7 @@ void outputCommand(ActionStream *a)    {
     }    
 }
 
-void compileOutput(ActionStream *a)   {
+void ActionStreamCompileOutput(ActionStream *a)   {
     absolute_time_t t1 = get_absolute_time();
 
     a->ci.index = 0;

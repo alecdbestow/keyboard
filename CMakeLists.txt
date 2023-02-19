@@ -54,12 +54,12 @@ target_link_libraries(action_stream PUBLIC pico_stdlib dict meta)
 
 
 add_executable(main)
+target_include_directories(main PUBLIC 
+    ${CMAKE_CURRENT_LIST_DIR}
+)
 target_sources(main PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/main.c
 )
+target_link_libraries(main PUBLIC pico_stdlib typer action_stream tinyusb_device tinyusb_board)
 
-target_include_directories(main PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(main PUBLIC pico_stdlib typer action_stream)
-
-pico_enable_stdio_uart(main 0)
 pico_add_extra_outputs(main)

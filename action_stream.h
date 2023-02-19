@@ -67,17 +67,17 @@ typedef struct compileMatch
 
 
 static size_t lstrcpy(char *dest, const char *source);
-void initActionStream(ActionStream *a);
+void ActionStreamInit(ActionStream *a);
 size_t getBounded(ActionStream *a, int i);
-void getCombinedStrokes(ActionStream *a, char* strokes, size_t start);
+void ActionStreamGetCombinedStrokes(ActionStream *a, char* strokes, size_t start);
 
 
-void addStroke(ActionStream *a, Stroke stroke);
+void ActionStreamAddStroke(ActionStream *a, Stroke stroke);
 
 
 //void compileActions(ActionStream *a);
-void compileOutput(ActionStream *a);
-void outputCommand(ActionStream *a);
+void ActionStreamCompileOutput(ActionStream *a);
+void ActionStreamCommandOutput(ActionStream *a);
 void callMatchFunc(ActionStream *a, CompileMatch *match, uint8_t order);
 bool outputOnce(ActionStream *a, bool checkIndex);
 void skipPrefix(ActionStream *a, uint8_t *match);

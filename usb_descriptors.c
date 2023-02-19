@@ -24,6 +24,7 @@
  */
 
 #include "tusb.h"
+
 #include "usb_descriptors.h"
 #include <string.h>
 
@@ -34,8 +35,7 @@
  *   [MSB]         HID | MSC | CDC          [LSB]
  */
 #define _PID_MAP(itf, n)  ( (CFG_TUD_##itf) << (n) )
-#define USB_PID           (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | \
-                           _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4) )
+#define USB_PID   0x400d
 
 #define USB_VID   0xCafe
 #define USB_BCD   0x0200
@@ -48,20 +48,20 @@ tusb_desc_device_t const desc_device =
     .bLength            = sizeof(tusb_desc_device_t),
     .bDescriptorType    = TUSB_DESC_DEVICE,
     .bcdUSB             = USB_BCD,
-    .bDeviceClass       = 0x00,
-    .bDeviceSubClass    = 0x00,
-    .bDeviceProtocol    = 0x00,
+    .bDeviceClass       = TUSB_CLASS_HID,
+    .bDeviceSubClass    = 0,
+    .bDeviceProtocol    = 1,
     .bMaxPacketSize0    = CFG_TUD_ENDPOINT0_SIZE,
 
     .idVendor           = USB_VID,
     .idProduct          = USB_PID,
     .bcdDevice          = 0x0100,
 
-    .iManufacturer      = 0x01,
-    .iProduct           = 0x02,
-    .iSerialNumber      = 0x03,
+    .iManufacturer      = 1,
+    .iProduct           = 2,
+    .iSerialNumber      = 3,
 
-    .bNumConfigurations = 0x01
+    .bNumConfigurations = 1
 };
 
 // Invoked when received GET DEVICE DESCRIPTOR
@@ -74,13 +74,19 @@ uint8_t const * tud_descriptor_device_cb(void)
 //--------------------------------------------------------------------+
 // HID Report Descriptor
 //--------------------------------------------------------------------+
-
+/*
 uint8_t const desc_hid_report[] =
 {
-  TUD_HID_REPORT_DESC_KEYBOARD( HID_REPORT_ID(REPORT_ID_KEYBOARD         )),
-  TUD_HID_REPORT_DESC_MOUSE   ( HID_REPORT_ID(REPORT_ID_MOUSE            )),
-  TUD_HID_REPORT_DESC_CONSUMER( HID_REPORT_ID(REPORT_ID_CONSUMER_CONTROL )),
-  TUD_HID_REPORT_DESC_GAMEPAD ( HID_REPORT_ID(REPORT_ID_GAMEPAD          ))
+  TUD_HID_REPORT_DESC_KEYBOARD( HID_REPORT_ID(REPORT_ID_KEYBOARD         ))
+};
+*/
+uint8_t const desc_hid_report[] =
+{
+  0x05, 0x01, 0x09, 0x06, 0xA1, 0x01, 0x05, 0x07, 0x19, 0xE0, 0x29, 0xE7, 0x15, 0x00, 0x25, 0x01,
+  0x75, 0x01, 0x95, 0x08, 0x81, 0x02, 0x95, 0x01, 0x75, 0x08, 0x81, 0x01, 0x95, 0x05, 0x75, 0x01,
+  0x05, 0x08, 0x19, 0x01, 0x29, 0x05, 0x91, 0x02, 0x95, 0x01, 0x75, 0x03, 0x91, 0x01, 0x95, 0x06,
+  0x75, 0x08, 0x15, 0x00, 0x26, 0xFF, 0x00, 0x05, 0x07, 0x19, 0x00, 0x2A, 0xFF, 0x00, 0x81, 0x00,
+  0x05, 0x0C, 0x09, 0x00, 0x15, 0x80, 0x25, 0x7F, 0x95, 0x40, 0x75, 0x08, 0xB1, 0x02, 0xC0
 };
 
 // Invoked when received GET HID REPORT DESCRIPTOR
@@ -112,7 +118,7 @@ uint8_t const desc_configuration[] =
   TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 100),
 
   // Interface number, string index, protocol, report descriptor len, EP In address, size & polling interval
-  TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report), EPNUM_HID, CFG_TUD_HID_EP_BUFSIZE, 5)
+  TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, 1, sizeof(desc_hid_report), EPNUM_HID, CFG_TUD_HID_EP_BUFSIZE, 5)
 };
 
 #if TUD_OPT_HIGH_SPEED
@@ -149,17 +155,7 @@ uint8_t const* tud_descriptor_device_qualifier_cb(void)
 // Invoked when received GET OTHER SEED CONFIGURATION DESCRIPTOR request
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
 // Configuration descriptor in the other speed e.g if high speed then this is for full speed and vice versa
-uint8_t const* tud_descriptor_other_speed_configuration_cb(uint8_t index)
-{
-  (void) index; // for multiple configurations
-
-  // other speed config is basically configuration with type = OHER_SPEED_CONFIG
-  memcpy(desc_other_speed_config, desc_configuration, CONFIG_TOTAL_LEN);
-  desc_other_speed_config[1] = TUSB_DESC_OTHER_SPEED_CONFIG;
-
-  // this example use the same configuration for both high and full speed mode
-  return desc_other_speed_config;
-}
+uint8_t const* tuddesc_configuration
 
 #endif // highspeed
 
@@ -172,6 +168,7 @@ uint8_t const * tud_descriptor_configuration_cb(uint8_t index)
 
   // This example use the same configuration for both high and full speed mode
   return desc_configuration;
+  
 }
 
 //--------------------------------------------------------------------+
