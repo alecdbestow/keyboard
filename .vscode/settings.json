@@ -47,6 +47,7 @@
         "usb_descriptors.h": "c",
         "gpio.h": "c",
         "timer.h": "c",
-        "binary_info.h": "c"
+        "binary_info.h": "c",
+        "keyboard_reader.h": "c"
     }
 }
