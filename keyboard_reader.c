@@ -1,11 +1,22 @@
 #include "keyboard_reader.h"
 #include "hardware/gpio.h"
+#include "tusb.h"
 
 uint8_t inEnumToPin[] = {9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 26, 27};
 uint8_t outEnumToPin[] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
 // the steno keys are listed in order at the beginning
 
-
+uint8_t codeFromEnum[] = {
+    HID_KEY_A, HID_KEY_Z, HID_KEY_S, HID_KEY_X, HID_KEY_D, HID_KEY_C, HID_KEY_F, HID_KEY_V, HID_KEY_SPACE, HID_KEY_SPACE, HID_KEY_G, HID_KEY_B, 
+    HID_KEY_H, HID_KEY_N, HID_KEY_SPACE, HID_KEY_SPACE, HID_KEY_J, HID_KEY_M, HID_KEY_K, HID_KEY_COMMA, HID_KEY_L, HID_KEY_PERIOD, HID_KEY_SEMICOLON, HID_KEY_SLASH, 
+    U209, U212, U183, U184, U169, U170, U155, U156, U154, U152, U211, U210,
+    U198, U197, U195, U196, U181, U182, U168, U140, U126, U127, U200, U199, 
+    U193, U194, U179, U180, U128, U202, U201, U191, U192, U177, U178, U163, 
+    U145, U131, U204, U203, U189, U190, U175, U176, U206, U205, U187, U188, 
+    U173, U174, U134, U135, U208, U207, U185, U186, U171, U172, U136, U137,
+    U226, U225, U218, U224, U217, U219, U214, U215, U216, U213, U223, U220,
+    U229, U228, U233, U235, U232, U236, U231, U230, U227, U234, U221, U222, NUM_KEYS
+};
 
 enum inPin gp0[NUM_IN_PINS] = {U209, U212, U183, U184, U169, U170, U155, U156, U154, U152, U211, U210};
 enum inPin gp1[NUM_IN_PINS] = {U198, U197, U195, U196, U181, U182, U167, U168, U141, U140, U126, U127};
@@ -41,6 +52,7 @@ void readerGetPressedKeys(bool keyArray[NUM_KEYS]) {
     for (size_t i = 0; i < NUM_OUT_PINS; i++)  {
         
         gpio_put(outEnumToPin[i], 1);
+        sleep_us(1);
         for (size_t j = 0; j < NUM_IN_PINS; j++)  {
             if (gpio_get(inEnumToPin[j]))   {
                 keyArray[allKeys[i][j]] = 1;
@@ -50,5 +62,10 @@ void readerGetPressedKeys(bool keyArray[NUM_KEYS]) {
             }
         }
         gpio_put(outEnumToPin[i], 0);
+        sleep_us(1);
     }
+}
+
+uint8_t getCodeFromEnum(uint8_t key)   {
+    return codeFromEnum[key];
 }

@@ -22,10 +22,22 @@
 int main() {
     initTyper();
     readerInit();
-    bool keyArray[NUM_KEYS];
+    bool keyArray[NUM_KEYS] = {0};
+    bool oldKeyArray[NUM_KEYS] = {0};
     while (1) {
-        readerGetPressedKeys(keyArray);
         tud_task();
+        readerGetPressedKeys(keyArray);
+        for (size_t i = 0; i < NUM_KEYS; i++)   {
+            if (keyArray[i] != oldKeyArray[i])  {
+                
+                pressKeys(keyArray);
+                memcpy(oldKeyArray, keyArray, sizeof(keyArray));
+                break;
+            }
+
+        }
+
+        /*
         if (board_button_read()){
             absolute_time_t t1 = get_absolute_time();
             sendString("asdf");
@@ -34,6 +46,7 @@ int main() {
             volatile int asdf = 0;
             sleep_ms(100);
         }
+        */
     }
     //mainn(a.output);
 

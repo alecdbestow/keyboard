@@ -2,6 +2,7 @@
 #define _HID_H_
 
 #include "tusb.h"
+#include "keyboard_reader.h"
 // call before sending any strings
 void initTyper(void);
 
@@ -16,5 +17,8 @@ void getCode(char c, uint8_t keycode[6]);
 
 // send a single char over usb
 void sendChar(char c);
+
+// press keys
+void pressKeys(bool keyArray[NUM_KEYS]);
 
 #endif

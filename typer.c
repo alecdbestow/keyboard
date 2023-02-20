@@ -70,6 +70,36 @@ void sendString(char *s) {
   volatile bool fdsa = false;
   return;
 }
+
+void pressKeys(bool keyArray[NUM_KEYS]) {
+  uint8_t keycodes[6] = {0}; // Map 'A' key
+  size_t idx = 0;
+  for (size_t i = 0; i < NUM_KEYS; i++) {
+    
+    if (keyArray[i])  {
+      keycodes[idx] = getCodeFromEnum(i);
+      if (idx == 6) {
+        break;
+      } else  {
+        idx++;
+      }
+    }
+  }
+  while (1) {
+    tud_task();
+    if (tud_hid_ready()) {
+        if (idx == 0) {
+            tud_hid_keyboard_report(0, 0, NULL);
+        } else{
+            tud_hid_keyboard_report(0, 0, keycodes);
+        }
+        break;
+    }
+  }
+}
+
+
+
 void tud_hid_report_complete_cb(uint8_t instance, uint8_t const* report, uint8_t len)
 {
 }

@@ -52,10 +52,13 @@ target_sources(action_stream PUBLIC
 target_link_libraries(action_stream PUBLIC pico_stdlib dict meta)
 
 add_library(keyboard_reader STATIC)
+target_include_directories(keyboard_reader PUBLIC 
+    ${CMAKE_CURRENT_LIST_DIR}
+)
 target_sources(keyboard_reader PUBLIC 
     ${CMAKE_CURRENT_LIST_DIR}/keyboard_reader.c
 )
-target_link_libraries(keyboard_reader PUBLIC pico_stdlib)
+target_link_libraries(keyboard_reader PUBLIC pico_stdlib tinyusb_device tinyusb_board)
 
 add_executable(main)
 target_include_directories(main PUBLIC 

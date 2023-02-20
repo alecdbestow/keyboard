@@ -18,7 +18,7 @@ enum keys{
 };
 
 
-
+uint8_t getCodeFromEnum(uint8_t key);
 void readerInit();
 void readerGetPressedKeys(bool keyArray[NUM_KEYS]);
 
