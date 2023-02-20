@@ -36,6 +36,7 @@ int main() {
             }
 
         }
+        sleep_us(200);
 
         /*
         if (board_button_read()){
