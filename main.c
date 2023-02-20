@@ -16,10 +16,15 @@
 #include "typer.h"
 #include "time.h"
 
+#include "keyboard_reader.h"
+
 
 int main() {
     initTyper();
+    readerInit();
+    bool keyArray[NUM_KEYS];
     while (1) {
+        readerGetPressedKeys(keyArray);
         tud_task();
         if (board_button_read()){
             absolute_time_t t1 = get_absolute_time();
