@@ -10,7 +10,7 @@
 static char *string;
 static uint8_t stringPosition = 0;
 
-void initTyper(void) {
+void typerInit(void) {
   board_init();
   tusb_init();
 }

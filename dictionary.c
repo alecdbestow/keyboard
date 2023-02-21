@@ -61,7 +61,7 @@ uint64_t getPos(Dictionary *d, uint32_t hash) {
     return (hash % (d->end - d->start)) + d->start;
 }
 
-void initDict(Dictionary *d, uint32_t start, uint32_t end) {
+void dictInit(Dictionary *d, uint32_t start, uint32_t end) {
     stdio_init_all();
     sd_init_driver();
     d->start = start;

@@ -34,6 +34,14 @@ target_sources(dict PUBLIC
 )
 target_link_libraries(dict PUBLIC pico_stdlib FatFs_SPI)
 
+add_library(stroke STATIC)
+target_include_directories(stroke INTERFACE
+    ${CMAKE_CURRENT_LIST_DIR}
+)
+target_sources(stroke PUBLIC 
+    ${CMAKE_CURRENT_LIST_DIR}/stroke.c
+)
+target_link_libraries(stroke PUBLIC pico_stdlib)
 
 add_library(meta STATIC)
 target_sources(meta PUBLIC 
@@ -67,6 +75,6 @@ target_include_directories(main PUBLIC
 target_sources(main PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/main.c
 )
-target_link_libraries(main PUBLIC pico_stdlib typer action_stream tinyusb_device tinyusb_board keyboard_reader)
+target_link_libraries(main PUBLIC pico_stdlib typer action_stream tinyusb_device tinyusb_board keyboard_reader stroke)
 
 pico_add_extra_outputs(main)

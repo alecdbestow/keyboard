@@ -44,13 +44,13 @@ size_t lstrcpy(char *dest, const char *source)    {
 }
 
 void initAction(Action *a)  {
-    memset(a->stroke, 0, NUM_STENO_KEYS);
+    memset(a->stroke, 0, NUM_STENO_CHARS);
     a->translation = NULL;//memset(a->translation, 0, MAX_TRANSLATION_LENGTH);
     a->length = 0;
 }
 
 void ActionStreamInit(ActionStream *a)  {
-    initDict(&(a->d), 0, 150000*10);
+    dictInit(&(a->d), 0, 150000*10);
     for (int i = 0; i < MAX_STORED_ACTIONS_LENGTH; i++) {
         initAction(&(a->actions[i]));
     }
@@ -103,9 +103,9 @@ void addString(ActionStream *a, size_t index, uint8_t *pos, uint8_t *trans) {
 
 void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
     a->end = (a->end + 1) % MAX_STORED_ACTIONS_LENGTH;
-    memcpy(a->actions[a->end].stroke, stroke, NUM_STENO_KEYS);
+    memcpy(a->actions[a->end].stroke, stroke, NUM_STENO_CHARS);
     char trans[MAX_TRANSLATION_LENGTH];
-    char combinedStrokes[NUM_STENO_KEYS * MAX_NUM_STROKES];
+    char combinedStrokes[NUM_STENO_CHARS * MAX_NUM_STROKES];
             
     size_t index;
     bool foundWord = false;

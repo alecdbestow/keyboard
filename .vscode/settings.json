@@ -49,6 +49,7 @@
         "timer.h": "c",
         "binary_info.h": "c",
         "keyboard_reader.h": "c",
-        "usb.h": "c"
+        "usb.h": "c",
+        "type_traits": "c"
     }
 }

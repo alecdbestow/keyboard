@@ -4,7 +4,7 @@
 #include "tusb.h"
 #include "keyboard_reader.h"
 // call before sending any strings
-void initTyper(void);
+void typerInit(void);
 
 // Send all of the contents in the string over usb
 void sendString(char *);

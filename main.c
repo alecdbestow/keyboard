@@ -16,26 +16,51 @@
 #include "typer.h"
 #include "time.h"
 
+#include "action_stream.h"
 #include "keyboard_reader.h"
+#include "stroke.h"
+
 
 
 int main() {
-    initTyper();
+    StrokeGetter sg;
+    strokeGetterInit(&sg);
+
+    ActionStream a;
+    ActionStreamInit(&a);
+
+    typerInit();
+
     readerInit();
+
+    bool stenoMode = true;
+
     bool keyArray[NUM_KEYS] = {0};
     bool oldKeyArray[NUM_KEYS] = {0};
     while (1) {
         tud_task();
         readerGetPressedKeys(keyArray);
-        for (size_t i = 0; i < NUM_KEYS; i++)   {
-            if (keyArray[i] != oldKeyArray[i])  {
-                
-                pressKeys(keyArray);
-                memcpy(oldKeyArray, keyArray, sizeof(keyArray));
-                break;
+        if (stenoMode)  {
+            strokeFromKeys(&sg, keyArray);
+            if (sg.stroke[0] != '\0')  {
+                ActionStreamAddStroke(&a, sg.stroke);
+                sendString(a.output);
             }
+        }   else    {
+            for (size_t i = 0; i < NUM_KEYS; i++)   {
+                if (keyArray[i] != oldKeyArray[i])  {
+                    absolute_time_t t1 = get_absolute_time();
+                    pressKeys(keyArray);
+                    absolute_time_t t2 = get_absolute_time();
+                    volatile int64_t fdsa = absolute_time_diff_us(t1, t2);
+                    volatile int asdf = 0;
+                    memcpy(oldKeyArray, keyArray, sizeof(keyArray));
+                    break;
+                }
 
+            }
         }
+
         sleep_us(200);
 
         /*

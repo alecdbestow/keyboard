@@ -15,7 +15,7 @@ typedef struct dictionary
 
 
 
-void initDict(Dictionary *d, uint32_t start, uint32_t end);
+void dictInit(Dictionary *d, uint32_t start, uint32_t end);
 int readSd(Dictionary *d);
 void writeSd(Dictionary *d);
 void addTranslation(Dictionary *d, char *term, char *translation);
