@@ -77,7 +77,6 @@ void writeSd(Dictionary *d)  {
 
 
 int readSd(Dictionary *d) {
-    // Enable UART so we can print status output  
     sd_read_blocks(d->pSD, d->buf, d->pos, 1);
     return 0;
 }

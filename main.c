@@ -33,27 +33,52 @@ int main() {
 
     readerInit();
 
+    ActionStreamAddStroke(&a, "KAP");
+    ActionStreamAddStroke(&a, "TAL");
+    ActionStreamAddStroke(&a, "KAP");
+    ActionStreamAddStroke(&a, "TAL");
+    ActionStreamAddStroke(&a, "KAP");
+    ActionStreamAddStroke(&a, "TAL");
+    ActionStreamAddStroke(&a, "KAP");
+    ActionStreamAddStroke(&a, "TAL");
+    ActionStreamAddStroke(&a, "KAP");
+    ActionStreamAddStroke(&a, "TAL");
+    ActionStreamAddStroke(&a, "KAP");
+    ActionStreamAddStroke(&a, "TAL");
+    ActionStreamAddStroke(&a, "KAP");
+    ActionStreamAddStroke(&a, "TAL");
+    ActionStreamAddStroke(&a, "AL");
+    ActionStreamAddStroke(&a, "AL");
+
+
+/*
     bool stenoMode = true;
 
     bool keyArray[NUM_KEYS] = {0};
     bool oldKeyArray[NUM_KEYS] = {0};
+    char typingString[MAX_OUTPUT_LENGTH] = {0};
+
     while (1) {
         tud_task();
         readerGetPressedKeys(keyArray);
         if (stenoMode)  {
             strokeFromKeys(&sg, keyArray);
             if (sg.stroke[0] != '\0')  {
+                absolute_time_t t1 = get_absolute_time();
                 ActionStreamAddStroke(&a, sg.stroke);
-                sendString(a.output);
+                absolute_time_t t2 = get_absolute_time();
+                volatile int64_t fdsa = absolute_time_diff_us(t1, t2);
+                volatile int asdf = 0;
+                getStringDiff(a.outputOld, a.output, typingString);
+                sendString(typingString);
+
             }
         }   else    {
             for (size_t i = 0; i < NUM_KEYS; i++)   {
                 if (keyArray[i] != oldKeyArray[i])  {
-                    absolute_time_t t1 = get_absolute_time();
+                    
                     pressKeys(keyArray);
-                    absolute_time_t t2 = get_absolute_time();
-                    volatile int64_t fdsa = absolute_time_diff_us(t1, t2);
-                    volatile int asdf = 0;
+
                     memcpy(oldKeyArray, keyArray, sizeof(keyArray));
                     break;
                 }
@@ -63,20 +88,10 @@ int main() {
 
         sleep_us(200);
 
-        /*
-        if (board_button_read()){
-            absolute_time_t t1 = get_absolute_time();
-            sendString("asdf");
-            absolute_time_t t2 = get_absolute_time();
-            volatile int64_t fdsa = absolute_time_diff_us(t1, t2);
-            volatile int asdf = 0;
-            sleep_ms(100);
-        }
-        */
     }
     //mainn(a.output);
 
-
+    */
     return 0;
 }
 

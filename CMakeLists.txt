@@ -11,16 +11,7 @@ pico_sdk_init()
 #        )
 add_subdirectory(FatFs_SPI)
 
-add_library(typer STATIC)
-target_include_directories(typer PUBLIC 
-    ${CMAKE_CURRENT_LIST_DIR}
-    ${CMAKE_CURRENT_LIST_DIR}/FatFs_SPI/sd_driver
-)
-target_sources(typer PUBLIC 
-    ${CMAKE_CURRENT_LIST_DIR}/typer.c
-    ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
-)
-target_link_libraries(typer PUBLIC pico_stdlib tinyusb_device tinyusb_board)
+
 
 
 
@@ -43,6 +34,9 @@ target_sources(stroke PUBLIC
 )
 target_link_libraries(stroke PUBLIC pico_stdlib)
 
+
+
+
 add_library(meta STATIC)
 target_sources(meta PUBLIC 
     ${CMAKE_CURRENT_LIST_DIR}/meta.c
@@ -51,13 +45,29 @@ target_link_libraries(meta PUBLIC pico_stdlib FatFs_SPI)
 
 
 add_library(action_stream STATIC)
-target_include_directories(typer PUBLIC 
+target_include_directories(action_stream PUBLIC 
     ${CMAKE_CURRENT_LIST_DIR}/FatFs_SPI/sd_driver
 )
 target_sources(action_stream PUBLIC 
     ${CMAKE_CURRENT_LIST_DIR}/action_stream.c
 )
 target_link_libraries(action_stream PUBLIC pico_stdlib dict meta)
+
+
+
+add_library(typer STATIC)
+target_include_directories(typer PUBLIC 
+    ${CMAKE_CURRENT_LIST_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}/FatFs_SPI/sd_driver
+)
+target_sources(typer PUBLIC 
+    ${CMAKE_CURRENT_LIST_DIR}/typer.c
+    ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
+)
+target_link_libraries(typer PUBLIC pico_stdlib tinyusb_device tinyusb_board action_stream)
+
+
+
 
 add_library(keyboard_reader STATIC)
 target_include_directories(keyboard_reader PUBLIC 

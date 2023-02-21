@@ -46,6 +46,7 @@ typedef struct action_stream
     size_t end;
     Action actions[MAX_STORED_ACTIONS_LENGTH];
     uint8_t actionsOutput[MAX_OUTPUT_LENGTH];
+    uint8_t outputOld[MAX_OUTPUT_LENGTH];
     uint8_t output[MAX_OUTPUT_LENGTH];
     Dictionary d;
     char spaceString[MAX_TRANSLATION_LENGTH];
@@ -80,6 +81,7 @@ void ActionStreamCompileOutput(ActionStream *a);
 void ActionStreamCommandOutput(ActionStream *a);
 void callMatchFunc(ActionStream *a, CompileMatch *match, uint8_t order);
 bool outputOnce(ActionStream *a, bool checkIndex);
+bool inIndex(ActionStream *a);
 void skipPrefix(ActionStream *a, uint8_t *match);
 CompileMatch *findMatch(ActionStream *a);
 bool prefix(const char *pre, const char *str);

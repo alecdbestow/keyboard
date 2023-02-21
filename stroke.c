@@ -16,15 +16,6 @@
 #define NUM_RIGHT_KEYS 10
 
 
-enum inPin strokeOrder[NUM_STENO_KEYS] = {
-    U181, U180, U179, U178, U175, 
-    U174, U173, U172, U167, U141, 
-    U166, U142, U165, U143, U164, 
-    U144, U129, U130, U162, U146, 
-    U161, U147, U132, U133, U161, 
-    U147, U160, U148, U159, U149, 
-    U158, U150, U157, U151
-};
 
 bool anyKeys[NUM_STENO_KEYS] = {
     true, true, true, true, true, 
@@ -75,6 +66,17 @@ bool rightKeys[NUM_STENO_KEYS] = {
     true, true, true, true, true, 
     true, true, true, true,  
 };
+
+enum inPin strokeOrder[NUM_STENO_KEYS] = {
+    U181, U180, U179, U178, U175, 
+    U174, U173, U172, U167, U141, 
+    U166, U142, U165, U143, U164, 
+    U144, U129, U130, U163, U145, 
+    U162, U146, U132, U133, U161, 
+    U147, U160, U148, U159, U149, 
+    U158, U150, U157, U151
+};
+
 
 char enumToStrokeChar[NUM_STENO_KEYS] = {
     '#', '#', '#', '#', '#', 

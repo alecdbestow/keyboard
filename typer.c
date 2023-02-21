@@ -10,9 +10,30 @@
 static char *string;
 static uint8_t stringPosition = 0;
 
-void typerInit(void) {
-  board_init();
-  tusb_init();
+void getStringDiff(char *oldOutput, char *output, char *diff)
+{
+  // skip over the characters that are the same
+  size_t i;
+  for (i = 0; oldOutput[i] == output[i] && output[i] != '\0'; i++)  {}
+
+  // delete the remaining chars from oldOutput
+  size_t j;
+  for (j = 0; j < strlen(oldOutput + i); j++)  {
+    diff[j] = '\b';
+  }
+
+  // add the remaining characters from output
+  for (size_t k = 0; k < strlen(output + i); k++) {
+    diff[j] = output[i + k];
+    j++;
+  }
+  diff[j] = '\0';
+}
+
+void typerInit(void)
+{
+    board_init();
+    tusb_init();
 }
 
 void sendChar(char c) {
@@ -42,9 +63,13 @@ static uint8_t const modifier_map[1] = {
 
 
 void sendString(char *s) {
+  if (s[0] == '\0') {
+    return;
+  }
   string = s;
   bool pressed = false;
   uint8_t keycodes[6] = {0}; // Map 'A' key
+  uint8_t modifier;
   volatile uint i = 0;
   while (1) {
       tud_task();
@@ -60,7 +85,8 @@ void sendString(char *s) {
               pressed = false;
           } else{
               getCode(string[0], keycodes);
-              tud_hid_keyboard_report(0, 0, keycodes);
+              modifier = getModifier(string[0]);
+              tud_hid_keyboard_report(0, modifier, keycodes);
               string++;
               pressed = true;
           }

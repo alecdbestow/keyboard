@@ -8,8 +8,8 @@
 //  W        W     W  W
 
 
-#define NUM_COMMAND_MATCHES 18
-#define IN_INDEX (a->ci.actionIndex >= a->actions[a->ci.index].translation && a->ci.actionIndex < a->actions[a->ci.index].translation + a->actions[a->ci.index].length)
+#define NUM_COMMAND_MATCHES 19
+#define IN_INDEX 
 
 static CompileMatch commands[NUM_COMMAND_MATCHES] =    {
     {.match = "{,}", .func = metaComma, .arg = CHAR, .order = POST, .prefixPos = PRE | POST},
@@ -29,7 +29,8 @@ static CompileMatch commands[NUM_COMMAND_MATCHES] =    {
     {.match = "{&", .func = metaGlue, .arg = ORDER, .order = PRE | POST, .prefixPos = PRE},
     {.match = "{^}", .func = metaAttach, .arg = CHAR, .order = POST, .prefixPos = PRE | POST},
     {.match = "{^", .func = metaAttach, .arg = CHAR, .order = PRE, .prefixPos = PRE},
-    {.match = "^}", .func = metaAttach, .arg = CHAR, .order = POST, .prefixPos = POST}
+    {.match = "^}", .func = metaAttach, .arg = CHAR, .order = POST, .prefixPos = POST},
+    {.match = "{}", .func = NULL, .arg = CHAR, .order = POST, .prefixPos = POST}
 };
 
 
@@ -69,6 +70,9 @@ void ActionStreamInit(ActionStream *a)  {
     a->ci.glue = false;
 }
 
+// returns a string which will always been within the max stored actions length
+// if an index is incremented over MAX_STORED_ACTIONS_LENGTH it starts from the beginning
+// if an index is decremented under 0 then it starts from the end.
 size_t getBounded(ActionStream *a, int i) {
 
     while (i < 0) {
@@ -82,6 +86,7 @@ size_t getBounded(ActionStream *a, int i) {
     
 }
 
+//
 void ActionStreamGetCombinedStrokes(ActionStream *a, char* strokes, size_t start)  {
     size_t stopPoint = getBounded(a, a->end + 1);
     size_t index = start;
@@ -94,6 +99,7 @@ void ActionStreamGetCombinedStrokes(ActionStream *a, char* strokes, size_t start
     }
 }
 
+//adds an a->spacestring to actions output, followed by the string: trans
 void addString(ActionStream *a, size_t index, uint8_t *pos, uint8_t *trans) {
     size_t len = strlen(a->actionsOutput);
     a->actions[index].translation = pos;
@@ -101,17 +107,26 @@ void addString(ActionStream *a, size_t index, uint8_t *pos, uint8_t *trans) {
     a->actions[index].length += lstrcpy(a->actions[index].translation + a->actions[index].length, trans);
 }
 
+// add a stroke to the action stream and compile the output
+// This is the main input function for the action stream
 void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
-    a->end = (a->end + 1) % MAX_STORED_ACTIONS_LENGTH;
+    a->end = getBounded(a, a->end + 1);
+    memmove(a->actionsOutput, a->actionsOutput + a->actions[a->end].length, a->actions[a->end].length);
+    initAction(a->actions + a->end);
     memcpy(a->actions[a->end].stroke, stroke, NUM_STENO_CHARS);
+
+    ActionStreamCompileOutput(a);
+
+    strcpy(a->outputOld, a->output);
     char trans[MAX_TRANSLATION_LENGTH];
     char combinedStrokes[NUM_STENO_CHARS * MAX_NUM_STROKES];
             
     size_t index;
     bool foundWord = false;
     //check all the strokes for translation
-    //a->end is inclusive
+    absolute_time_t t1 = get_absolute_time();
     uint8_t *pos = a->actionsOutput;
+    //start 11 away from the end as the max number of strokes is 11
     for (index = getBounded(a, a->end - MAX_NUM_STROKES + 1); index != a->end; index = getBounded(a, index + 1))   {
         if (a->actions[index].translation)  {
 
@@ -128,28 +143,38 @@ void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
             }
         }
     }
-    
+    absolute_time_t t2 = get_absolute_time();
+    volatile int64_t fdsa = absolute_time_diff_us(t1, t2);
+    volatile int asdf = 0;
     if (!foundWord && index == a->end) {
         getTranslation(&(a->d), stroke, trans);
         if (trans[0] != '\0')   {
             addString(a, index, a->actionsOutput + strlen(a->actionsOutput), trans);
         }   else    {
-            addString(a, index, a->actionsOutput + strlen(a->actionsOutput), trans);
+            addString(a, index, a->actionsOutput + strlen(a->actionsOutput), stroke); // output the stroke if there are no translations found
         }
     }   else    {
         for (; index != getBounded(a, a->end + 1); index = getBounded(a, index + 1))   {
-            a->actions[index].translation = NULL; // remove all the translations following the one created
+            a->actions[index].translation = NULL; // remove all the translations following the one created as they have now been encorporated
         }
     }
     // if no translation found
 
+    if (a->ci.actionIndex - a->output > MAX_OUTPUT_LENGTH - MAX_TRANSLATION_LENGTH) {
 
+    }
     ActionStreamCompileOutput(a);
+
 }
 
+bool inIndex(ActionStream *a)  {
+    return (a->ci.actionIndex >= a->actions[a->ci.index].translation && 
+    a->ci.actionIndex < a->actions[a->ci.index].translation + a->actions[a->ci.index].length);
+}
 
+// outputs into the output stream, a command is seen as a single output
 bool outputOnce(ActionStream *a, bool checkIndex)    {
-    if (IN_INDEX || !checkIndex)  {
+    if (a->ci.actionIndex && inIndex(a) || !checkIndex)  {
         if (prefix(a->spaceString, a->ci.actionIndex))   {
             if (a->ci.attachNext)   {
                 a->ci.attachNext = false;
@@ -197,21 +222,23 @@ bool outputOnce(ActionStream *a, bool checkIndex)    {
     }  
 }
 
+// iterate over an action, and place its output in the action stream output
 void outputAction(ActionStream *a) {
 
     while (outputOnce(a, true))  {}
 }
 
-
+// returns true if a the string: str, starts with the prefix string: pre
 bool prefix(const char *pre, const char *str)
 {
     return strncmp(pre, str, strlen(pre)) == 0;
 }
 
 
+// iterate over all the possible command matches and return the first match
 CompileMatch *findMatch(ActionStream *a)    {
     uint8_t *oldIndex = a->ci.actionIndex;
-    while(IN_INDEX && a->ci.actionIndex[0] != '}')  {
+    while(inIndex(a) && a->ci.actionIndex[0] != '}')  {
         for (size_t i = 0; i < NUM_COMMAND_MATCHES; i++)    {
             if (prefix(commands[i].match, a->ci.actionIndex))  {
                 a->ci.actionIndex = oldIndex;
@@ -225,6 +252,7 @@ CompileMatch *findMatch(ActionStream *a)    {
     return NULL;
 }
 
+// given a prefix: match, increment the action index over it
 void skipPrefix(ActionStream *a, uint8_t *match)    {
     if (prefix(match, a->ci.actionIndex))    {
         a->ci.actionIndex += strlen(match);
@@ -277,16 +305,30 @@ void ActionStreamCommandOutput(ActionStream *a)    {
     }    
 }
 
+bool incrementIndex(ActionStream *a)   {
+    a->ci.index = getBounded(a, a->ci.index + 1);
+    a->ci.actionIndex = a->actions[a->ci.index].translation;
+    if (a->ci.index == getBounded(a, a->end + 1))   {
+        return false;
+    }   else    {
+        return true;
+    }
+}
+
 void ActionStreamCompileOutput(ActionStream *a)   {
     absolute_time_t t1 = get_absolute_time();
 
-    a->ci.index = 0;
+    //set the first index as the end + 2
+    a->ci.index = getBounded(a, a->end + 2);
+
+    //output from the beginning of each string
     a->ci.actionIndex = a->actionsOutput;
     a->ci.outIndex = a->output;
-    while (a->ci.actionIndex[0] != '\0')  {
+    //while the actionIndex hasn't finished all actions, output an action, then increment a->ci.actionIndex[0] != '\0' && 
+    do  {
         outputAction(a);
-        a->ci.index++;
-    }
+    }    while (incrementIndex(a));
+    a->ci.outIndex[0] = '\0';
     absolute_time_t t2 = get_absolute_time();
     volatile int64_t fdsa = absolute_time_diff_us(t1, t2);
     volatile int asdf = 0;

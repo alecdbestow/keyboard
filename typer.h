@@ -3,6 +3,9 @@
 
 #include "tusb.h"
 #include "keyboard_reader.h"
+#include "action_stream.h"
+
+void getStringDiff(char *oldOutput, char *output, char *diff);
 // call before sending any strings
 void typerInit(void);
 
