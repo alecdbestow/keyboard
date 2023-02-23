@@ -53,15 +53,20 @@ void initAction(Action *a)  {
 void ActionStreamInit(ActionStream *a)  {
     dictInit(&(a->d), 0, 150000*10);
     for (int i = 0; i < MAX_STORED_ACTIONS_LENGTH; i++) {
-        initAction(&(a->actions[i]));
+        initAction(a->actions + i);
     }
+    for (int i = 0; i < MAX_STORED_ACTIONS_LENGTH -1; i++) {
+        a->actions[i].nextAction = a->actions + i + 1;
+    }
+    a->actions[MAX_STORED_ACTIONS_LENGTH -1].nextAction = a->actions;
     memset(a->output, 0, MAX_OUTPUT_LENGTH);
     memset(a->actionsOutput, 0, MAX_OUTPUT_LENGTH);
-    a->end = MAX_STORED_ACTIONS_LENGTH - 1;
+    a->end = a->actions;
+    //a->end = MAX_STORED_ACTIONS_LENGTH - 1;
     lstrcpy(a->spaceString, " ");
         
-    a->ci.outIndex = a->output;
-    a->ci.actionIndex = a->actionsOutput;
+    a->ci.outputIndex = a->output;
+    a->ci.actionsOutputIndex = a->actionsOutput;
 
     a->ci.attachNext = false;
     a->ci.capNext = false;
@@ -70,57 +75,52 @@ void ActionStreamInit(ActionStream *a)  {
     a->ci.glue = false;
 }
 
-// returns a string which will always been within the max stored actions length
-// if an index is incremented over MAX_STORED_ACTIONS_LENGTH it starts from the beginning
-// if an index is decremented under 0 then it starts from the end.
-size_t getBounded(ActionStream *a, int i) {
-
-    while (i < 0) {
-        i += MAX_STORED_ACTIONS_LENGTH;
-    }
-    if (i >= MAX_STORED_ACTIONS_LENGTH) {
-        return (size_t)(i% MAX_STORED_ACTIONS_LENGTH);
-    }   else    {
-        return (size_t)i;
-    }
-    
-}
-
 //
-void ActionStreamGetCombinedStrokes(ActionStream *a, char* strokes, size_t start)  {
-    size_t stopPoint = getBounded(a, a->end + 1);
-    size_t index = start;
-    size_t len = lstrcpy(strokes, a->actions[start].stroke);
-    index = getBounded(a, index + 1);
-    while (index != stopPoint)    {
+void ActionStreamGetCombinedStrokes(ActionStream *a, char* strokes, Action* start)  {
+    size_t len = lstrcpy(strokes, start->stroke);
+    for (Action *i = start->nextAction; i != a->end->nextAction; i = i->nextAction)    {
         len += lstrcpy(strokes+len, "/");
-        len += lstrcpy(strokes+len, a->actions[index].stroke);
-        index = getBounded(a, index + 1);
+        len += lstrcpy(strokes+len, i->stroke);
     }
 }
 
 //adds an a->spacestring to actions output, followed by the string: trans
-void addString(ActionStream *a, size_t index, uint8_t *pos, uint8_t *trans) {
+void addString(ActionStream *a, Action *index, uint8_t *pos, uint8_t *trans) {
     size_t len = strlen(a->actionsOutput);
-    a->actions[index].translation = pos;
-    a->actions[index].length = lstrcpy(a->actions[index].translation, a->spaceString);
-    a->actions[index].length += lstrcpy(a->actions[index].translation + a->actions[index].length, trans);
+    index->translation = pos;
+    index->length = lstrcpy(index->translation, a->spaceString);
+    index->length += lstrcpy(index->translation + index->length, trans);
 }
+
+
+Action *getBounded(ActionStream *a, Action *i) {
+
+    volatile int asdf = i - a->actions;
+    while (i - a->actions < 0) {
+        i += MAX_STORED_ACTIONS_LENGTH;
+    }
+    while (i >= a->actions + MAX_STORED_ACTIONS_LENGTH) {
+        i -= MAX_STORED_ACTIONS_LENGTH;
+    }
+    return i;
+}
+
 
 // add a stroke to the action stream and compile the output
 // This is the main input function for the action stream
 void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
     // iterate the end index
-    a->end = getBounded(a, a->end + 1);
+    a->end = a->end->nextAction;
     
-    // shift the translations down by one action
-    memmove(a->actionsOutput, a->actionsOutput + a->actions[a->end].length, a->actions[a->end].length);
-    for (size_t i = getBounded(a, a->end + 2); i != getBounded(a, a->end + 1); i = getBounded(a, i + 1))    {
-        a->actions[i].translation -= a->actions[a->end].length;
+    for (Action *i = a->end->nextAction; i != a->end; i = i->nextAction)    {
+        i->translation -= a->end->length;
     }
+
+    // shift the translations down by one action
+    memmove(a->actionsOutput, a->actionsOutput + a->end->length, a->end->length);
     
     // copy the stroke into new stroke into the end index
-    memcpy(a->actions[a->end].stroke, stroke, NUM_STENO_CHARS);
+    memcpy(a->end->stroke, stroke, NUM_STENO_CHARS);
 
     // compile the output and save it to oldOutput
     // needed to calculate the difference between the strings for typing
@@ -130,45 +130,50 @@ void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
     char trans[MAX_TRANSLATION_LENGTH];
     char combinedStrokes[NUM_STENO_CHARS * MAX_NUM_STROKES];
             
-    size_t index;
+    Action *index = getBounded(a, a->end - MAX_NUM_STROKES + 1);
     bool foundWord = false;
     //check all the strokes for translation
     absolute_time_t t1 = get_absolute_time();
+
     uint8_t *pos = a->actionsOutput;
+    while (index != a->end) {
+        if (index->length > 0) {
+            pos = index->translation;
+            break;
+        }
+        index = index->nextAction;
+    }
+
     //start 11 away from the end as the max number of strokes is 11
-    for (index = getBounded(a, a->end - MAX_NUM_STROKES + 1); index != a->end; index = getBounded(a, index + 1))   {
-        if (a->actions[index].translation)  {
+    while (index != a->end->nextAction)   {
+        if (index->length > 0 || index == a->end)  {
 
             ActionStreamGetCombinedStrokes(a, combinedStrokes, index);
             getTranslation(&(a->d), combinedStrokes, trans);
             if (trans[0] != '\0')   {
                 
                 addString(a, index, pos, trans);
-                index = getBounded(a, index + 1);
+                
                 foundWord = true;
                 break;
             }   else    {
-                pos += a->actions[index].length;
+                pos += index->length;
             }
         }
+        index = index->nextAction;
     }
     absolute_time_t t2 = get_absolute_time();
     volatile int64_t fdsa = absolute_time_diff_us(t1, t2);
     volatile int asdf = 0;
 
     
-    if (!foundWord && index == a->end) {
-        getTranslation(&(a->d), stroke, trans);
-        if (trans[0] != '\0')   {
-            addString(a, index, a->actionsOutput + strlen(a->actionsOutput), trans);
-        }   else    {
-            // output the stroke if there are no translations found
-            addString(a, index, a->actionsOutput + strlen(a->actionsOutput), stroke); 
-        }
+    if (!foundWord) {
+        addString(a, index, pos, stroke); 
     }   else    {
-        for (; index != getBounded(a, a->end + 1); index = getBounded(a, index + 1))   {
+        for (index = index->nextAction; index != a->end->nextAction; index = index->nextAction)   {
             // remove all the translations following the one created as they have now been encorporated
-            a->actions[index].translation = NULL; 
+            index->translation = NULL; 
+            index->length = 0;
         }
     }
 
@@ -177,21 +182,21 @@ void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
 
 }
 
-// checks wether the actionIndex is within the translation of the ci.index translation
+// checks wether the actionsOutputIndex is within the translation of the ci.index translation
 bool inIndex(ActionStream *a)  {
-    return (a->ci.actionIndex >= a->actions[a->ci.index].translation && 
-    a->ci.actionIndex < a->actions[a->ci.index].translation + a->actions[a->ci.index].length);
+    return (a->ci.actionsOutputIndex >= a->ci.actionsIndex->translation && 
+    a->ci.actionsOutputIndex < a->ci.actionsIndex->translation + a->ci.actionsIndex->length);
 }
 
 // outputs into the output stream, a command is seen as a single output
 // returns false if the action index is NULL 
-// OR actionIndex is outside of the ci.index action and the checkIndex bool is true
+// OR actionsOutputIndex is outside of the ci.index action and the checkIndex bool is true
 bool outputOnce(ActionStream *a, bool checkIndex)    {
-    if (a->ci.actionIndex && inIndex(a) || !checkIndex)  {
-        if (prefix(a->spaceString, a->ci.actionIndex))   {
+    if (a->ci.actionsOutputIndex && inIndex(a) || !checkIndex)  {
+        if (prefix(a->spaceString, a->ci.actionsOutputIndex))   {
             if (a->ci.attachNext)   {
                 a->ci.attachNext = false;
-                a->ci.actionIndex += strlen(a->spaceString);
+                a->ci.actionsOutputIndex += strlen(a->spaceString);
                 
             } 
             else if (a->ci.finishedCapWord)  {
@@ -199,36 +204,36 @@ bool outputOnce(ActionStream *a, bool checkIndex)    {
             }
 
         }
-        if (a->ci.actionIndex[0] == '\\')   {
-            a->ci.actionIndex++;
-            a->ci.outIndex[0] = a->ci.actionIndex[0];
+        if (a->ci.actionsOutputIndex[0] == '\\')   {
+            a->ci.actionsOutputIndex++;
+            a->ci.outputIndex[0] = a->ci.actionsOutputIndex[0];
         }
-        else if (a->ci.actionIndex[0] == '{')   {
+        else if (a->ci.actionsOutputIndex[0] == '{')   {
             ActionStreamCommandOutput(a);
             return true;
         }
-        else if (isalpha(a->ci.actionIndex[0])) {
+        else if (isalpha(a->ci.actionsOutputIndex[0])) {
             if (a->ci.capNext)    {
-                a->ci.outIndex[0] = toupper(a->ci.actionIndex[0]);
+                a->ci.outputIndex[0] = toupper(a->ci.actionsOutputIndex[0]);
                 a->ci.capNext = false;
             }
             else if (a->ci.lowerNext)   {
-                a->ci.outIndex[0] = tolower(a->ci.actionIndex[0]);
+                a->ci.outputIndex[0] = tolower(a->ci.actionsOutputIndex[0]);
                 a->ci.lowerNext = false;
             }
             else if (a->ci.capWord)   {
-                a->ci.outIndex[0] = toupper(a->ci.actionIndex[0]);
+                a->ci.outputIndex[0] = toupper(a->ci.actionsOutputIndex[0]);
                 a->ci.finishedCapWord = true;
             }
             else    {
-                a->ci.outIndex[0] = a->ci.actionIndex[0];
+                a->ci.outputIndex[0] = a->ci.actionsOutputIndex[0];
             }
         }   else    {
-            a->ci.outIndex[0] = a->ci.actionIndex[0];
+            a->ci.outputIndex[0] = a->ci.actionsOutputIndex[0];
         }
             
-        a->ci.actionIndex++;
-        a->ci.outIndex++;
+        a->ci.actionsOutputIndex++;
+        a->ci.outputIndex++;
         return true;
     }   else    {
         return false;
@@ -250,32 +255,32 @@ bool prefix(const char *pre, const char *str)
 
 // iterate over all the possible command matches and return the first match
 CompileMatch *findMatch(ActionStream *a)    {
-    uint8_t *oldIndex = a->ci.actionIndex;
-    while(inIndex(a) && a->ci.actionIndex[0] != '}')  {
+    uint8_t *oldIndex = a->ci.actionsOutputIndex;
+    while(inIndex(a) && a->ci.actionsOutputIndex[0] != '}')  {
         for (size_t i = 0; i < NUM_COMMAND_MATCHES; i++)    {
-            if (prefix(commands[i].match, a->ci.actionIndex))  {
-                a->ci.actionIndex = oldIndex;
+            if (prefix(commands[i].match, a->ci.actionsOutputIndex))  {
+                a->ci.actionsOutputIndex = oldIndex;
                 return &commands[i];
             }
         }
-        a->ci.actionIndex++;
+        a->ci.actionsOutputIndex++;
 
     }
-    a->ci.actionIndex = oldIndex;
+    a->ci.actionsOutputIndex = oldIndex;
     return NULL;
 }
 
 // given a prefix: match, increment the action index over it
 void skipPrefix(ActionStream *a, uint8_t *match)    {
-    if (prefix(match, a->ci.actionIndex))    {
-        a->ci.actionIndex += strlen(match);
+    if (prefix(match, a->ci.actionsOutputIndex))    {
+        a->ci.actionsOutputIndex += strlen(match);
     }
 }
 
 // calls the function in the given compileMatch and passes the appropriate arguments
 void callMatchFunc(ActionStream *a, CompileMatch *match, uint8_t order) {
         if (match->arg == CHAR)  {
-            match->func(a, match->match[0]);
+            match->func(a, match->match[1]);
         }   else  if (match->arg == ORDER)  {
             match->func(a, order);
         }   else  {
@@ -289,16 +294,16 @@ void performCommandOutput(ActionStream *a, CompileMatch *match) {
     if (match->prefixPos & PRE && match->prefixPos & POST)    {
         skipPrefix(a, match->match);
     } else if (match->prefixPos & POST) {
-        a->ci.actionIndex++; // skip the first { character
-        while (!prefix(match->match, a->ci.actionIndex))    {
+        a->ci.actionsOutputIndex++; // skip the first { character
+        while (!prefix(match->match, a->ci.actionsOutputIndex))    {
             outputOnce(a, true);
         }
         skipPrefix(a, match->match);
     }
     else if (match->prefixPos & PRE) {
         skipPrefix(a, match->match);
-        while (a->ci.actionIndex[0] != '}' && outputOnce(a, true)) {}
-        a->ci.actionIndex++;
+        while (a->ci.actionsOutputIndex[0] != '}' && outputOnce(a, true)) {}
+        a->ci.actionsOutputIndex++;
     }
 }
 
@@ -322,11 +327,11 @@ void ActionStreamCommandOutput(ActionStream *a)    {
     }    
 }
 
-// updates the index variable and the actionIndex pointer
+// updates the index variable and the actionsOutputIndex pointer
 bool incrementIndex(ActionStream *a)   {
-    a->ci.index = getBounded(a, a->ci.index + 1);
-    a->ci.actionIndex = a->actions[a->ci.index].translation;
-    if (a->ci.index == getBounded(a, a->end + 1))   {
+    a->ci.actionsIndex = a->ci.actionsIndex->nextAction;
+    a->ci.actionsOutputIndex = a->ci.actionsIndex->translation;
+    if (a->ci.actionsIndex == a->end->nextAction)   {
         return false;
     }   else    {
         return true;
@@ -337,16 +342,16 @@ void ActionStreamCompileOutput(ActionStream *a)   {
     absolute_time_t t1 = get_absolute_time();
 
     //set the first index as the end + 2
-    a->ci.index = getBounded(a, a->end + 2);
+    a->ci.actionsIndex = a->end->nextAction->nextAction;
 
     //output from the beginning of each string
-    a->ci.actionIndex = a->actionsOutput;
-    a->ci.outIndex = a->output;
-    //while the actionIndex hasn't finished all actions, output an action, then increment a->ci.actionIndex[0] != '\0' && 
+    a->ci.actionsOutputIndex = a->actionsOutput;
+    a->ci.outputIndex = a->output;
+    //while the actionsOutputIndex hasn't finished all actions, output an action, then increment a->ci.actionsOutputIndex[0] != '\0' && 
     do  {
         outputAction(a);
     }    while (incrementIndex(a));
-    a->ci.outIndex[0] = '\0';
+    a->ci.outputIndex[0] = '\0';
     absolute_time_t t2 = get_absolute_time();
     volatile int64_t fdsa = absolute_time_diff_us(t1, t2);
     volatile int asdf = 0;

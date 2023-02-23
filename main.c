@@ -16,34 +16,22 @@ int main() {
     ActionStream a;
     ActionStreamInit(&a);
 
+    char typingString[MAX_OUTPUT_LENGTH] = {0};
+
     typerInit();
 
     readerInit();
-
     ActionStreamAddStroke(&a, "KAP");
     ActionStreamAddStroke(&a, "TAL");
 
     ActionStreamAddStroke(&a, "KAP");
     ActionStreamAddStroke(&a, "TAL");
 
-    ActionStreamAddStroke(&a, "KAP");
-    ActionStreamAddStroke(&a, "TAL");
-
-    ActionStreamAddStroke(&a, "KAP");
-    ActionStreamAddStroke(&a, "TAL");
-
-    ActionStreamAddStroke(&a, "KAP");
-    ActionStreamAddStroke(&a, "TAL");
-
-    ActionStreamAddStroke(&a, "KAP");
-    ActionStreamAddStroke(&a, "TAL");
-
-    ActionStreamAddStroke(&a, "KAP");
-    ActionStreamAddStroke(&a, "TAL");
+    ActionStreamAddStroke(&a, "-FPL");
     
-    ActionStreamAddStroke(&a, "AL");
-    ActionStreamAddStroke(&a, "AL");
-
+    ActionStreamAddStroke(&a, "KAP");
+    ActionStreamAddStroke(&a, "TAL");
+    getStringDiff(a.outputOld, a.output, typingString);
 
 /*
     bool stenoMode = true;

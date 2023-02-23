@@ -14,11 +14,19 @@
 #define POST 1
 #define PRE 1<<1
 
+typedef struct action
+{
+    Stroke stroke;
+    uint8_t *translation;
+    size_t length;
+    struct action *nextAction;
+} Action;
+
 typedef struct compilerIndex
 {
-    size_t index;
-    uint8_t *outIndex;
-    uint8_t *actionIndex;
+    Action *actionsIndex;
+    uint8_t *outputIndex;
+    uint8_t *actionsOutputIndex;
 
     bool inCommand;
 
@@ -32,18 +40,9 @@ typedef struct compilerIndex
 } CompilerIndex;
 
 
-
-typedef struct action
-{
-    Stroke stroke;
-    uint8_t *translation;
-    size_t length;
-} Action;
-
-
 typedef struct action_stream
 {
-    size_t end;
+    Action *end;
     Action actions[MAX_STORED_ACTIONS_LENGTH];
     uint8_t actionsOutput[MAX_OUTPUT_LENGTH];
     uint8_t outputOld[MAX_OUTPUT_LENGTH];
@@ -69,13 +68,12 @@ typedef struct compileMatch
 
 static size_t lstrcpy(char *dest, const char *source);
 void ActionStreamInit(ActionStream *a);
-size_t getBounded(ActionStream *a, int i);
-void ActionStreamGetCombinedStrokes(ActionStream *a, char* strokes, size_t start);
-
+Action *getBounded(ActionStream *a, Action *i);
+void ActionStreamGetCombinedStrokes(ActionStream *a, char* strokes, Action* start);
 
 void ActionStreamAddStroke(ActionStream *a, Stroke stroke);
 
-
+void addString(ActionStream *a, Action *index, uint8_t *pos, uint8_t *trans);
 //void compileActions(ActionStream *a);
 void ActionStreamCompileOutput(ActionStream *a);
 void ActionStreamCommandOutput(ActionStream *a);

@@ -4,14 +4,17 @@
 #include <string.h>
 
 void metaComma(ActionStream *a, char comma)  {
-    *(a->ci.outIndex) = comma;
-    a->ci.outIndex++;
+    metaAttach(a, comma);
+    *(a->ci.outputIndex) = comma;
+    a->ci.outputIndex++;
 }
 
+
 void metaStop(ActionStream *a, char stop)    {
-    *(a->ci.outIndex) = stop;
+    metaAttach(a, stop);
+    *(a->ci.outputIndex) = stop;
     a->ci.capNext = true;
-    a->ci.outIndex++;
+    a->ci.outputIndex++;
 }
 
 void metaCase(ActionStream *a, char arg) {
@@ -30,45 +33,45 @@ void metaCase(ActionStream *a, char arg) {
 
 
 void findPreviousWordStart(ActionStream *a)   {
-    for (; a->ci.outIndex >= a->output && a->ci.outIndex[0] == '\0'; a->ci.outIndex--)    {} 
-    for (; a->ci.outIndex >= a->output && !isalpha(*(a->ci.outIndex)); a->ci.outIndex--)    {} // scan through any non text
-    for (; a->ci.outIndex >= a->output && isalpha(*(a->ci.outIndex)); a->ci.outIndex--)    {} // scan through any text
+    for (; a->ci.outputIndex >= a->output && a->ci.outputIndex[0] == '\0'; a->ci.outputIndex--)    {} 
+    for (; a->ci.outputIndex >= a->output && !isalpha(*(a->ci.outputIndex)); a->ci.outputIndex--)    {} // scan through any non text
+    for (; a->ci.outputIndex >= a->output && isalpha(*(a->ci.outputIndex)); a->ci.outputIndex--)    {} // scan through any text
 }
 
 void metaRetroCase(ActionStream *a, char arg)    {
-    uint8_t *oldActionIndex = a->ci.actionIndex;
-    uint8_t *oldOutIndex = a->ci.outIndex;
+    uint8_t *oldactionsOutputIndex = a->ci.actionsOutputIndex;
+    uint8_t *oldoutputIndex = a->ci.outputIndex;
     findPreviousWordStart(a);
     metaCase(a, arg);
-    a->ci.actionIndex = a->ci.outIndex;
-    while ((a->ci.outIndex < oldOutIndex) && outputOnce(a, false)){}
-    a->ci.actionIndex = oldActionIndex;
-    a->ci.outIndex = oldOutIndex;
+    a->ci.actionsOutputIndex = a->ci.outputIndex;
+    while ((a->ci.outputIndex < oldoutputIndex) && outputOnce(a, false)){}
+    a->ci.actionsOutputIndex = oldactionsOutputIndex;
+    a->ci.outputIndex = oldoutputIndex;
     
 }
 
 char *getPrevTranslation(ActionStream *a)  {
-    return a->actions[getBounded(a, a->ci.index - 1)].translation;
+    return a->ci.actionsIndex->nextAction->translation;
 }
 
 
 void metaGlue(ActionStream *a, char arg) {
 
     if (arg & PRE && a->ci.glue)  {
-        uint8_t *oldActionIndex = a->ci.actionIndex;
-        a->ci.actionIndex = a->ci.glue;
+        uint8_t *oldactionsOutputIndex = a->ci.actionsOutputIndex;
+        a->ci.actionsOutputIndex = a->ci.glue;
         skipPrefix(a, a->spaceString);
-        if (prefix("{&", a->ci.actionIndex))  {
-            a->ci.outIndex -= strlen(a->spaceString); // 
+        if (prefix("{&", a->ci.actionsOutputIndex))  {
+            a->ci.outputIndex -= strlen(a->spaceString); // 
         }
-        a->ci.actionIndex = oldActionIndex;
+        a->ci.actionsOutputIndex = oldactionsOutputIndex;
     }   else if (arg & POST) {
-        a->ci.glue = a->ci.actionIndex;
+        a->ci.glue = a->ci.actionsOutputIndex;
     }
 }
 
 void metaAttach(ActionStream *a, char arg)   {
-    a->ci.outIndex -= strlen(a->spaceString);
+    a->ci.outputIndex -= strlen(a->spaceString);
 }
 
 void carryCap(ActionStream *a, char arg)    {
