@@ -110,14 +110,23 @@ void addString(ActionStream *a, size_t index, uint8_t *pos, uint8_t *trans) {
 // add a stroke to the action stream and compile the output
 // This is the main input function for the action stream
 void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
+    // iterate the end index
     a->end = getBounded(a, a->end + 1);
+    
+    // shift the translations down by one action
     memmove(a->actionsOutput, a->actionsOutput + a->actions[a->end].length, a->actions[a->end].length);
-    initAction(a->actions + a->end);
+    for (size_t i = getBounded(a, a->end + 2); i != getBounded(a, a->end + 1); i = getBounded(a, i + 1))    {
+        a->actions[i].translation -= a->actions[a->end].length;
+    }
+    
+    // copy the stroke into new stroke into the end index
     memcpy(a->actions[a->end].stroke, stroke, NUM_STENO_CHARS);
 
+    // compile the output and save it to oldOutput
+    // needed to calculate the difference between the strings for typing
     ActionStreamCompileOutput(a);
-
     strcpy(a->outputOld, a->output);
+
     char trans[MAX_TRANSLATION_LENGTH];
     char combinedStrokes[NUM_STENO_CHARS * MAX_NUM_STROKES];
             
@@ -146,33 +155,37 @@ void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
     absolute_time_t t2 = get_absolute_time();
     volatile int64_t fdsa = absolute_time_diff_us(t1, t2);
     volatile int asdf = 0;
+
+    
     if (!foundWord && index == a->end) {
         getTranslation(&(a->d), stroke, trans);
         if (trans[0] != '\0')   {
             addString(a, index, a->actionsOutput + strlen(a->actionsOutput), trans);
         }   else    {
-            addString(a, index, a->actionsOutput + strlen(a->actionsOutput), stroke); // output the stroke if there are no translations found
+            // output the stroke if there are no translations found
+            addString(a, index, a->actionsOutput + strlen(a->actionsOutput), stroke); 
         }
     }   else    {
         for (; index != getBounded(a, a->end + 1); index = getBounded(a, index + 1))   {
-            a->actions[index].translation = NULL; // remove all the translations following the one created as they have now been encorporated
+            // remove all the translations following the one created as they have now been encorporated
+            a->actions[index].translation = NULL; 
         }
     }
-    // if no translation found
 
-    if (a->ci.actionIndex - a->output > MAX_OUTPUT_LENGTH - MAX_TRANSLATION_LENGTH) {
-
-    }
+    // compile with the new stroke added
     ActionStreamCompileOutput(a);
 
 }
 
+// checks wether the actionIndex is within the translation of the ci.index translation
 bool inIndex(ActionStream *a)  {
     return (a->ci.actionIndex >= a->actions[a->ci.index].translation && 
     a->ci.actionIndex < a->actions[a->ci.index].translation + a->actions[a->ci.index].length);
 }
 
 // outputs into the output stream, a command is seen as a single output
+// returns false if the action index is NULL 
+// OR actionIndex is outside of the ci.index action and the checkIndex bool is true
 bool outputOnce(ActionStream *a, bool checkIndex)    {
     if (a->ci.actionIndex && inIndex(a) || !checkIndex)  {
         if (prefix(a->spaceString, a->ci.actionIndex))   {
@@ -259,6 +272,7 @@ void skipPrefix(ActionStream *a, uint8_t *match)    {
     }
 }
 
+// calls the function in the given compileMatch and passes the appropriate arguments
 void callMatchFunc(ActionStream *a, CompileMatch *match, uint8_t order) {
         if (match->arg == CHAR)  {
             match->func(a, match->match[0]);
@@ -269,6 +283,8 @@ void callMatchFunc(ActionStream *a, CompileMatch *match, uint8_t order) {
         }
 }
 
+// outputs from a '{' char until a '}' and performs the relevant formatting
+// actually writes to a->output
 void performCommandOutput(ActionStream *a, CompileMatch *match) {
     if (match->prefixPos & PRE && match->prefixPos & POST)    {
         skipPrefix(a, match->match);
@@ -286,6 +302,7 @@ void performCommandOutput(ActionStream *a, CompileMatch *match) {
     }
 }
 
+// used to call the match function either at the begining of 
 void ActionStreamCommandOutput(ActionStream *a)    {
 
     CompileMatch *match = findMatch(a);
@@ -305,6 +322,7 @@ void ActionStreamCommandOutput(ActionStream *a)    {
     }    
 }
 
+// updates the index variable and the actionIndex pointer
 bool incrementIndex(ActionStream *a)   {
     a->ci.index = getBounded(a, a->ci.index + 1);
     a->ci.actionIndex = a->actions[a->ci.index].translation;
