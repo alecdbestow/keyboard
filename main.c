@@ -1,18 +1,5 @@
-#include "pico/stdlib.h"
-#include "pico/binary_info.h"
-#include "hardware/gpio.h"
-#include "hardware/irq.h"
-#include "hardware/timer.h"
-#include "hardware/structs/usb.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#include "bsp/board.h"
 #include "tusb.h"
 
-#include "usb_descriptors.h"
 #include "typer.h"
 #include "time.h"
 
@@ -35,18 +22,25 @@ int main() {
 
     ActionStreamAddStroke(&a, "KAP");
     ActionStreamAddStroke(&a, "TAL");
+
     ActionStreamAddStroke(&a, "KAP");
     ActionStreamAddStroke(&a, "TAL");
+
     ActionStreamAddStroke(&a, "KAP");
     ActionStreamAddStroke(&a, "TAL");
+
     ActionStreamAddStroke(&a, "KAP");
     ActionStreamAddStroke(&a, "TAL");
+
     ActionStreamAddStroke(&a, "KAP");
     ActionStreamAddStroke(&a, "TAL");
+
     ActionStreamAddStroke(&a, "KAP");
     ActionStreamAddStroke(&a, "TAL");
+
     ActionStreamAddStroke(&a, "KAP");
     ActionStreamAddStroke(&a, "TAL");
+    
     ActionStreamAddStroke(&a, "AL");
     ActionStreamAddStroke(&a, "AL");
 
