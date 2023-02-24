@@ -113,14 +113,19 @@ void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
     a->end = a->end->nextAction;
     
     for (Action *i = a->end->nextAction; i != a->end; i = i->nextAction)    {
-        i->translation -= a->end->length;
+        if (i->translation) {
+            i->translation -= a->end->length;
+        }
+        
     }
 
     // shift the translations down by one action
-    memmove(a->actionsOutput, a->actionsOutput + a->end->length, a->end->length);
+    memmove(a->actionsOutput, a->actionsOutput + a->end->length, strlen(a->actionsOutput) + 1 - a->end->length);
     
     // copy the stroke into new stroke into the end index
     memcpy(a->end->stroke, stroke, NUM_STENO_CHARS);
+    a->end->translation = NULL;
+    a->end->length = 0;
 
     // compile the output and save it to oldOutput
     // needed to calculate the difference between the strings for typing
@@ -168,7 +173,7 @@ void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
 
     
     if (!foundWord) {
-        addString(a, index, pos, stroke); 
+        addString(a, a->end, pos, stroke); 
     }   else    {
         for (index = index->nextAction; index != a->end->nextAction; index = index->nextAction)   {
             // remove all the translations following the one created as they have now been encorporated

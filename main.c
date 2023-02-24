@@ -7,8 +7,6 @@
 #include "keyboard_reader.h"
 #include "stroke.h"
 
-
-
 int main() {
     StrokeGetter sg;
     strokeGetterInit(&sg);
@@ -19,26 +17,21 @@ int main() {
     char typingString[MAX_OUTPUT_LENGTH] = {0};
 
     typerInit();
-
     readerInit();
-    ActionStreamAddStroke(&a, "KAP");
-    ActionStreamAddStroke(&a, "TAL");
-
-    ActionStreamAddStroke(&a, "KAP");
-    ActionStreamAddStroke(&a, "TAL");
-
-    ActionStreamAddStroke(&a, "-FPL");
-    
-    ActionStreamAddStroke(&a, "KAP");
-    ActionStreamAddStroke(&a, "TAL");
+    /*
+    for (int i = 0; i < 20; i++)    {
+        ActionStreamAddStroke(&a, "HEL");
+    }
+    ActionStreamAddStroke(&a, "TEFT");
+    ActionStreamAddStroke(&a, "PHRAEU");
     getStringDiff(a.outputOld, a.output, typingString);
 
-/*
+*/
+
     bool stenoMode = true;
 
     bool keyArray[NUM_KEYS] = {0};
     bool oldKeyArray[NUM_KEYS] = {0};
-    char typingString[MAX_OUTPUT_LENGTH] = {0};
 
     while (1) {
         tud_task();
@@ -73,7 +66,6 @@ int main() {
     }
     //mainn(a.output);
 
-    */
     return 0;
 }
 
