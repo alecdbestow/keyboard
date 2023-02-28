@@ -32,23 +32,19 @@ int main() {
 
     bool keyArray[NUM_KEYS] = {0};
     bool oldKeyArray[NUM_KEYS] = {0};
+    for (int i = 0; i < 20; i++)    {
+        ActionStreamAddStroke(&a, "KAP");
+        ActionStreamAddStroke(&a, "TAL");
+    }
+    ActionStreamAddStroke(&a, "KAP");
+    ActionStreamAddStroke(&a, "SAOEUT");
+    ActionStreamAddStroke(&a, "PWAOEUPB");
+    ActionStreamUndo(&a);
 
     while (1) {
         tud_task();
         readerGetPressedKeys(keyArray);
-        if (stenoMode)  {
-            strokeFromKeys(&sg, keyArray);
-            if (sg.stroke[0] != '\0')  {
-                absolute_time_t t1 = get_absolute_time();
-                ActionStreamAddStroke(&a, sg.stroke);
-                absolute_time_t t2 = get_absolute_time();
-                volatile int64_t fdsa = absolute_time_diff_us(t1, t2);
-                volatile int asdf = 0;
-                getStringDiff(a.outputOld, a.output, typingString);
-                sendString(typingString);
-
-            }
-        }   else    {
+        if (!stenoMode)    {
             for (size_t i = 0; i < NUM_KEYS; i++)   {
                 if (keyArray[i] != oldKeyArray[i])  {
                     
@@ -57,8 +53,17 @@ int main() {
                     memcpy(oldKeyArray, keyArray, sizeof(keyArray));
                     break;
                 }
+            }
+        }   else {
+            strokeFromKeys(&sg, keyArray);
+            if (sg.stroke[0] != '\0')  {
+
+                ActionStreamAddStroke(&a, sg.stroke);
+                getStringDiff(a.outputOld, a.output, typingString);
+                sendString(typingString);
 
             }
+            
         }
 
         sleep_us(200);

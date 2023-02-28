@@ -20,6 +20,7 @@ typedef struct action
     uint8_t *translation;
     size_t length;
     struct action *nextAction;
+    struct action *prevAction;
 } Action;
 
 typedef struct compilerIndex
@@ -72,17 +73,21 @@ Action *getBounded(ActionStream *a, Action *i);
 void ActionStreamGetCombinedStrokes(ActionStream *a, char* strokes, Action* start);
 
 void ActionStreamAddStroke(ActionStream *a, Stroke stroke);
-
-void addString(ActionStream *a, Action *index, uint8_t *pos, uint8_t *trans);
+void ActionStreamUndo(ActionStream *a);
+void addString(ActionStream *a, Action *index, uint8_t *trans);
 //void compileActions(ActionStream *a);
 void ActionStreamCompileOutput(ActionStream *a);
 void ActionStreamCommandOutput(ActionStream *a);
 void callMatchFunc(ActionStream *a, CompileMatch *match, uint8_t order);
 bool outputOnce(ActionStream *a, bool checkIndex);
 bool inIndex(ActionStream *a);
+Action *ActionStreamGetNextTranslation(ActionStream *a, Action *index);
 void skipPrefix(ActionStream *a, uint8_t *match);
 CompileMatch *findMatch(ActionStream *a);
 bool prefix(const char *pre, const char *str);
+void ActionStreamWipeTranslations(ActionStream *a, Action *index);
+Action* ActionStreamSearchForTranslation(ActionStream *a, Action *index);
+void asdf(ActionStream *a, Action *index, Stroke stroke);
 
 
 

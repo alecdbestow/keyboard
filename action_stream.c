@@ -57,7 +57,9 @@ void ActionStreamInit(ActionStream *a)  {
     }
     for (int i = 0; i < MAX_STORED_ACTIONS_LENGTH -1; i++) {
         a->actions[i].nextAction = a->actions + i + 1;
+        a->actions[i+1].prevAction = a->actions + i;
     }
+    a->actions[0].prevAction = a->actions + MAX_STORED_ACTIONS_LENGTH - 1;
     a->actions[MAX_STORED_ACTIONS_LENGTH -1].nextAction = a->actions;
     memset(a->output, 0, MAX_OUTPUT_LENGTH);
     memset(a->actionsOutput, 0, MAX_OUTPUT_LENGTH);
@@ -85,26 +87,14 @@ void ActionStreamGetCombinedStrokes(ActionStream *a, char* strokes, Action* star
 }
 
 //adds an a->spacestring to actions output, followed by the string: trans
-void addString(ActionStream *a, Action *index, uint8_t *pos, uint8_t *trans) {
+void addString(ActionStream *a, Action *index, uint8_t *trans) {
     size_t len = strlen(a->actionsOutput);
-    index->translation = pos;
+    if (!index->translation)    {
+        index->translation = a->actionsOutput + strlen(a->actionsOutput);
+    }
     index->length = lstrcpy(index->translation, a->spaceString);
     index->length += lstrcpy(index->translation + index->length, trans);
 }
-
-
-Action *getBounded(ActionStream *a, Action *i) {
-
-    volatile int asdf = i - a->actions;
-    while (i - a->actions < 0) {
-        i += MAX_STORED_ACTIONS_LENGTH;
-    }
-    while (i >= a->actions + MAX_STORED_ACTIONS_LENGTH) {
-        i -= MAX_STORED_ACTIONS_LENGTH;
-    }
-    return i;
-}
-
 
 // add a stroke to the action stream and compile the output
 // This is the main input function for the action stream
@@ -112,17 +102,15 @@ void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
     // iterate the end index
     a->end = a->end->nextAction;
     
+    // shift the translations down by one action
     for (Action *i = a->end->nextAction; i != a->end; i = i->nextAction)    {
         if (i->translation) {
             i->translation -= a->end->length;
         }
-        
     }
-
-    // shift the translations down by one action
     memmove(a->actionsOutput, a->actionsOutput + a->end->length, strlen(a->actionsOutput) + 1 - a->end->length);
     
-    // copy the stroke into new stroke into the end index
+    // copy the stroke into the end index
     memcpy(a->end->stroke, stroke, NUM_STENO_CHARS);
     a->end->translation = NULL;
     a->end->length = 0;
@@ -132,24 +120,97 @@ void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
     ActionStreamCompileOutput(a);
     strcpy(a->outputOld, a->output);
 
-    char trans[MAX_TRANSLATION_LENGTH];
-    char combinedStrokes[NUM_STENO_CHARS * MAX_NUM_STROKES];
-            
-    Action *index = getBounded(a, a->end - MAX_NUM_STROKES + 1);
-    bool foundWord = false;
-    //check all the strokes for translation
-    absolute_time_t t1 = get_absolute_time();
 
-    uint8_t *pos = a->actionsOutput;
+    //start MAX_NUM_STROKES away from the end as thats the longest lookup possible
+    Action *index = a->end; 
+    for (uint i = 0; i < MAX_NUM_STROKES; i++)  {
+        index = index->prevAction;
+        
+    }
+    // start on an action with a translation
+    index = ActionStreamGetNextTranslation(a, index);
+ 
+    asdf(a, index, stroke);
+    // compile with the new stroke added
+    ActionStreamCompileOutput(a);
+
+}
+
+void ActionStreamUndo(ActionStream * a)
+{
+    Action *index = a->end;
+
+    Stroke history[MAX_NUM_STROKES] = {0};
+    uint numStrokes = 0;
+
+    ActionStreamCompileOutput(a);
+    strcpy(a->outputOld, a->output);
+
+    while (index != a->end->nextAction) {
+        a->end = a->end->prevAction;
+        strcpy(history[numStrokes], index->stroke);
+        index->stroke[0] = '\0';
+        index->translation[0] = '\0';
+        if (index->length > 0) {
+            index->length = 0;
+            break;
+        }
+        numStrokes++;
+        index = index->prevAction;
+        
+    }
+    while (numStrokes >= 1) {
+        a->end = a->end->nextAction;
+        strcpy(a->end->stroke, history[numStrokes]);
+        asdf(a, a->end, history[numStrokes]);
+        numStrokes--;
+    }
+    ActionStreamCompileOutput(a);
+    // find last translation
+    // for every stroke in that translation but the last one:
+    // copy all the old strokes from that translation into an array of strokes
+    // remember the old output array
+    // delete all the strokes from that translation
+
+    // add them to the action stream one by one
+}
+
+void asdf(ActionStream *a, Action *index, Stroke stroke) {
+    //check all the strokes for translation
+    index = ActionStreamSearchForTranslation(a, index);
+
+    if (index->length == 0) {
+        a->end->translation = a->actionsOutput + strlen(a->actionsOutput);
+        addString(a, a->end, stroke); 
+    }   else    {
+        index = index->nextAction;
+        ActionStreamWipeTranslations(a, index);
+    }
+}
+
+Action *ActionStreamGetNextTranslation(ActionStream *a, Action *index) {
     while (index != a->end) {
         if (index->length > 0) {
-            pos = index->translation;
             break;
         }
         index = index->nextAction;
     }
+    return index;
+}
 
-    //start 11 away from the end as the max number of strokes is 11
+void ActionStreamWipeTranslations(ActionStream *a, Action *index) {
+    while (index != a->end->nextAction)   {
+        // remove all the translations following the one created as they have now been encorporated
+        index->translation = NULL; 
+        index->length = 0;
+        index = index->nextAction;
+    }
+}
+
+// sets the a->index variable to the location of the last
+Action* ActionStreamSearchForTranslation(ActionStream *a, Action *index)  {
+    char trans[MAX_TRANSLATION_LENGTH];
+    char combinedStrokes[NUM_STENO_CHARS * MAX_NUM_STROKES];
     while (index != a->end->nextAction)   {
         if (index->length > 0 || index == a->end)  {
 
@@ -157,34 +218,14 @@ void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
             getTranslation(&(a->d), combinedStrokes, trans);
             if (trans[0] != '\0')   {
                 
-                addString(a, index, pos, trans);
+                addString(a, index, trans);
                 
-                foundWord = true;
-                break;
-            }   else    {
-                pos += index->length;
+                return index;
             }
         }
         index = index->nextAction;
     }
-    absolute_time_t t2 = get_absolute_time();
-    volatile int64_t fdsa = absolute_time_diff_us(t1, t2);
-    volatile int asdf = 0;
-
-    
-    if (!foundWord) {
-        addString(a, a->end, pos, stroke); 
-    }   else    {
-        for (index = index->nextAction; index != a->end->nextAction; index = index->nextAction)   {
-            // remove all the translations following the one created as they have now been encorporated
-            index->translation = NULL; 
-            index->length = 0;
-        }
-    }
-
-    // compile with the new stroke added
-    ActionStreamCompileOutput(a);
-
+    return index;
 }
 
 // checks wether the actionsOutputIndex is within the translation of the ci.index translation
@@ -344,8 +385,6 @@ bool incrementIndex(ActionStream *a)   {
 }
 
 void ActionStreamCompileOutput(ActionStream *a)   {
-    absolute_time_t t1 = get_absolute_time();
-
     //set the first index as the end + 2
     a->ci.actionsIndex = a->end->nextAction->nextAction;
 
@@ -357,7 +396,4 @@ void ActionStreamCompileOutput(ActionStream *a)   {
         outputAction(a);
     }    while (incrementIndex(a));
     a->ci.outputIndex[0] = '\0';
-    absolute_time_t t2 = get_absolute_time();
-    volatile int64_t fdsa = absolute_time_diff_us(t1, t2);
-    volatile int asdf = 0;
 }
