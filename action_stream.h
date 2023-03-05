@@ -14,6 +14,15 @@
 #define POST 1
 #define PRE 1<<1
 
+
+typedef struct match
+{
+    char arg;
+    char matchString[10];
+    char *start;
+    char *end;
+} Match;
+
 typedef struct action
 {
     Stroke stroke;
@@ -54,17 +63,13 @@ typedef struct action_stream
     
 } ActionStream;
 
-typedef void (*Func)(ActionStream *, char);
 
-typedef struct compileMatch
-{
+typedef void (*Func)(ActionStream *, Match *, char);
+
+typedef struct commandMatch  {
     Func func;
-    char arg;
-    char match[10];
-    uint8_t order;
-    uint8_t prefixPos;
-} CompileMatch;
-
+    Match match;
+} CommandMatch;
 
 
 static size_t lstrcpy(char *dest, const char *source);
@@ -78,12 +83,12 @@ void addString(ActionStream *a, Action *index, uint8_t *trans);
 //void compileActions(ActionStream *a);
 void ActionStreamCompileOutput(ActionStream *a);
 void ActionStreamCommandOutput(ActionStream *a);
-void callMatchFunc(ActionStream *a, CompileMatch *match, uint8_t order);
+void callMatchFunc(ActionStream *a, CommandMatch *match, uint8_t order);
 bool outputOnce(ActionStream *a, bool checkIndex);
-bool inIndex(ActionStream *a);
+bool inIndex(ActionStream *a, char *pos);
 Action *ActionStreamGetNextTranslation(ActionStream *a, Action *index);
 void skipPrefix(ActionStream *a, uint8_t *match);
-CompileMatch *findMatch(ActionStream *a);
+void findCommandMatch(ActionStream *a, CommandMatch *cm);
 bool prefix(const char *pre, const char *str);
 void ActionStreamWipeTranslations(ActionStream *a, Action *index);
 Action* ActionStreamSearchForTranslation(ActionStream *a, Action *index);

@@ -11,27 +11,38 @@
 #define NUM_COMMAND_MATCHES 19
 #define IN_INDEX 
 
-static CompileMatch commands[NUM_COMMAND_MATCHES] =    {
-    {.match = "{,}", .func = metaComma, .arg = CHAR, .order = POST, .prefixPos = PRE | POST},
-    {.match = "{:}", .func = metaComma, .arg = CHAR, .order = POST, .prefixPos = PRE | POST},
-    {.match = "{;}", .func = metaComma, .arg = CHAR, .order = POST, .prefixPos = PRE | POST},
-    {.match = "{.}", .func = metaStop, .arg = CHAR, .order = POST, .prefixPos = PRE | POST},
-    {.match = "{!}", .func = metaStop, .arg = CHAR, .order = POST, .prefixPos = PRE | POST},
-    {.match = "{?}", .func = metaStop, .arg = CHAR, .order = POST, .prefixPos = PRE | POST},
-    {.match = "{-|}", .func = metaCase, .arg = CAP_FIRST_WORD, .order = POST, .prefixPos = PRE | POST},
-    {.match = "{>}", .func = metaCase, .arg = LOWER_FIRST_CHAR, .order = POST, .prefixPos = PRE | POST},
-    {.match = "{<}", .func = metaCase, .arg = UPPER_FIRST_WORD, .order = POST, .prefixPos = PRE | POST},
-    {.match = "{*-|}", .func = metaRetroCase, .arg = CAP_FIRST_WORD, .order = PRE, .prefixPos = PRE | POST},
-    {.match = "{*>}", .func = metaRetroCase, .arg = LOWER_FIRST_CHAR, .order = PRE, .prefixPos = PRE | POST},
-    {.match = "{*<}", .func = metaRetroCase, .arg = UPPER_FIRST_WORD, .order = PRE, .prefixPos = PRE | POST},
-    {.match = "{^~|", .func = carryCap, .arg = UPPER_FIRST_WORD, .order = POST, .prefixPos = PRE | POST},
-    {.match = "{~|", .func = carryCap, .arg = UPPER_FIRST_WORD, .order = POST, .prefixPos = PRE | POST},
-    {.match = "{&", .func = metaGlue, .arg = ORDER, .order = PRE | POST, .prefixPos = PRE},
-    {.match = "{^}", .func = metaAttach, .arg = CHAR, .order = POST, .prefixPos = PRE | POST},
-    {.match = "{^", .func = metaAttach, .arg = CHAR, .order = PRE, .prefixPos = PRE},
-    {.match = "^}", .func = metaAttach, .arg = CHAR, .order = POST, .prefixPos = POST},
-    {.match = "{}", .func = NULL, .arg = CHAR, .order = POST, .prefixPos = POST}
+static CommandMatch commands[NUM_COMMAND_MATCHES] =    {
+    {.match = {.matchString = "{,}", .arg = CHAR}, .func = metaComma},
+    {.match = {.matchString = "{:}", .arg = CHAR}, .func = metaComma},
+    {.match = {.matchString = "{;}", .arg = CHAR}, .func = metaComma},
+    {.match = {.matchString = "{.}", .arg = CHAR}, .func = metaStop},
+    {.match = {.matchString = "{!}", .arg = CHAR}, .func = metaStop},
+    {.match = {.matchString = "{?}", .arg = CHAR}, .func = metaStop},
+    {.match = {.matchString = "{-|}", .arg = CAP_FIRST_WORD}, .func = metaCase},
+    {.match = {.matchString = "{>}", .arg = LOWER_FIRST_CHAR}, .func = metaCase},
+    {.match = {.matchString = "{<}", .arg = UPPER_FIRST_WORD}, .func = metaCase},
+    {.match = {.matchString = "{*-|}", .arg = CAP_FIRST_WORD}, .func = metaRetroCase},
+    {.match = {.matchString = "{*>}", .arg = LOWER_FIRST_CHAR}, .func = metaRetroCase},
+    {.match = {.matchString = "{*<}", .arg = UPPER_FIRST_WORD}, .func = metaRetroCase},
+    {.match = {.matchString = "{^~|", .arg = UPPER_FIRST_WORD}, .func = carryCap},
+    {.match = {.matchString = "{~|#}", .arg = UPPER_FIRST_WORD}, .func = carryCap},
+    {.match = {.matchString = "{&#}", .arg = ORDER}, .func = metaGlue},
+    {.match = {.matchString = "{^}", .arg = CHAR}, .func = metaAttach},
+    {.match = {.matchString = "{^#}", .arg = CHAR}, .func = metaAttach},
+    {.match = {.matchString = "{#^}", .arg = CHAR}, .func = metaAttach},
+    {.match = {.matchString = "{}", .arg = CHAR}, .func = metaRestart}
 };
+
+
+
+bool regex(Match *match)    {
+    uint i = 0;
+    while (match->matchString[i] == inputString[i] || (match->matchString[i] == '#' && !()))
+    if (match->matchString[0] == '#')  {
+        while (!prefix())
+            
+    }
+}
 
 
 // Returns the length of the string copied
@@ -229,16 +240,16 @@ Action* ActionStreamSearchForTranslation(ActionStream *a, Action *index)  {
 }
 
 // checks wether the actionsOutputIndex is within the translation of the ci.index translation
-bool inIndex(ActionStream *a)  {
-    return (a->ci.actionsOutputIndex >= a->ci.actionsIndex->translation && 
-    a->ci.actionsOutputIndex < a->ci.actionsIndex->translation + a->ci.actionsIndex->length);
+bool inIndex(ActionStream *a, char *pos)  {
+    return (pos >= a->ci.actionsIndex->translation && 
+    pos < a->ci.actionsIndex->translation + a->ci.actionsIndex->length);
 }
 
 // outputs into the output stream, a command is seen as a single output
 // returns false if the action index is NULL 
 // OR actionsOutputIndex is outside of the ci.index action and the checkIndex bool is true
 bool outputOnce(ActionStream *a, bool checkIndex)    {
-    if (a->ci.actionsOutputIndex && inIndex(a) || !checkIndex)  {
+    if (a->ci.actionsOutputIndex && inIndex(a, a->ci.actionsOutputIndex) || !checkIndex)  {
         if (prefix(a->spaceString, a->ci.actionsOutputIndex))   {
             if (a->ci.attachNext)   {
                 a->ci.attachNext = false;
@@ -256,6 +267,10 @@ bool outputOnce(ActionStream *a, bool checkIndex)    {
         }
         else if (a->ci.actionsOutputIndex[0] == '{')   {
             ActionStreamCommandOutput(a);
+            return true;
+        }
+        else if (a->ci.actionsOutputIndex[0] == '}')    {
+            a->ci.actionsOutputIndex++;
             return true;
         }
         else if (isalpha(a->ci.actionsOutputIndex[0])) {
@@ -300,20 +315,36 @@ bool prefix(const char *pre, const char *str)
 
 
 // iterate over all the possible command matches and return the first match
-CompileMatch *findMatch(ActionStream *a)    {
-    uint8_t *oldIndex = a->ci.actionsOutputIndex;
-    while(inIndex(a) && a->ci.actionsOutputIndex[0] != '}')  {
-        for (size_t i = 0; i < NUM_COMMAND_MATCHES; i++)    {
-            if (prefix(commands[i].match, a->ci.actionsOutputIndex))  {
-                a->ci.actionsOutputIndex = oldIndex;
-                return &commands[i];
+void findCommandMatch(ActionStream *a, CommandMatch *cm)    {
+    uint numLeft = 0;
+    uint numRight = 0;
+    
+    char *index = a->ci.actionsOutputIndex;
+    do   {
+        if (index[0] == '\\')   {
+            index++;
+        }   else if (index[0] == '{')   {
+            if (numLeft == 0)   {
+                cm->match.start = index;
+            }
+            numLeft++;
+        }   else if (index[0] == '}')   {
+            cm->match.end = index;
+            numRight++;
+        }
+        if (numLeft - numRight == 1)    {
+            // only search for commands in the top level of the command
+            for (size_t i = 0; i < NUM_COMMAND_MATCHES; i++)    {
+                if (prefix(commands[i].match.matchString, index))  {
+                    cm->func = commands[i].func;
+                    strcpy(cm->match.matchString, commands[i].match.matchString);
+                    cm->match.arg = commands[i].match.arg;
+                }
             }
         }
-        a->ci.actionsOutputIndex++;
+        index++;
 
-    }
-    a->ci.actionsOutputIndex = oldIndex;
-    return NULL;
+    } while(inIndex(a, index) && numLeft > numRight);
 }
 
 // given a prefix: match, increment the action index over it
@@ -323,54 +354,32 @@ void skipPrefix(ActionStream *a, uint8_t *match)    {
     }
 }
 
-// calls the function in the given compileMatch and passes the appropriate arguments
-void callMatchFunc(ActionStream *a, CompileMatch *match, uint8_t order) {
-        if (match->arg == CHAR)  {
-            match->func(a, match->match[1]);
-        }   else  if (match->arg == ORDER)  {
-            match->func(a, order);
-        }   else  {
-            match->func(a, match->arg);
-        }
-}
 
 // outputs from a '{' char until a '}' and performs the relevant formatting
 // actually writes to a->output
-void performCommandOutput(ActionStream *a, CompileMatch *match) {
-    if (match->prefixPos & PRE && match->prefixPos & POST)    {
-        skipPrefix(a, match->match);
-    } else if (match->prefixPos & POST) {
-        a->ci.actionsOutputIndex++; // skip the first { character
-        while (!prefix(match->match, a->ci.actionsOutputIndex))    {
-            outputOnce(a, true);
-        }
-        skipPrefix(a, match->match);
-    }
-    else if (match->prefixPos & PRE) {
-        skipPrefix(a, match->match);
-        while (a->ci.actionsOutputIndex[0] != '}' && outputOnce(a, true)) {}
-        a->ci.actionsOutputIndex++;
-    }
+void performCommandOutput(ActionStream *a, Match *m) {
+    do  {
+        skipPrefix(a, m->matchString);
+    }   while   (
+        outputOnce(a, true) && 
+        a->ci.actionsOutputIndex >= m->start && 
+        a->ci.actionsOutputIndex <= m->end
+    );
 }
 
 // used to call the match function either at the begining of 
 void ActionStreamCommandOutput(ActionStream *a)    {
 
-    CompileMatch *match = findMatch(a);
-    bool outputted = false;
-    if (match)  {
-        if (match->order & PRE) {
-            callMatchFunc(a, match, PRE);
-            performCommandOutput(a, match);
-            outputted = true;
-        }
-        if (match->order & POST){
-            if (!outputted) {
-                performCommandOutput(a, match);
-            }
-            callMatchFunc(a, match, POST);
-        }
-    }    
+    Match match = {0};
+    CommandMatch cm;
+    findCommandMatch(a, &cm);
+    if (cm.match.start && cm.match.end)  {
+            cm.func(a, &(cm.match), PRE);
+            performCommandOutput(a, &(cm.match));
+            cm.func(a, &(cm.match), POST);
+    }    else   {
+        // TODO
+    }
 }
 
 // updates the index variable and the actionsOutputIndex pointer

@@ -9,6 +9,8 @@
 
 int main() {
     StrokeGetter sg;
+
+
     strokeGetterInit(&sg);
 
     ActionStream a;
@@ -18,29 +20,25 @@ int main() {
 
     typerInit();
     readerInit();
+    bool stenoMode = true;
+
+    bool keyArray[NUM_KEYS] = {0};
+    bool oldKeyArray[NUM_KEYS] = {0};
     /*
-    for (int i = 0; i < 20; i++)    {
-        ActionStreamAddStroke(&a, "HEL");
+    for (int i = 0; i < 40; i++)    {
+        ActionStreamAddStroke(&a, "HAOEU");
     }
     ActionStreamAddStroke(&a, "TEFT");
     ActionStreamAddStroke(&a, "PHRAEU");
     getStringDiff(a.outputOld, a.output, typingString);
 
-*/
 
-    bool stenoMode = true;
-
-    bool keyArray[NUM_KEYS] = {0};
-    bool oldKeyArray[NUM_KEYS] = {0};
-    for (int i = 0; i < 20; i++)    {
-        ActionStreamAddStroke(&a, "KAP");
-        ActionStreamAddStroke(&a, "TAL");
-    }
-    ActionStreamAddStroke(&a, "KAP");
-    ActionStreamAddStroke(&a, "SAOEUT");
+    ActionStreamAddStroke(&a, "HAOEU");
+    //ActionStreamAddStroke(&a, "KPA");
+    ActionStreamAddStroke(&a, "HAOEU");
     ActionStreamAddStroke(&a, "PWAOEUPB");
     ActionStreamUndo(&a);
-
+*/
     while (1) {
         tud_task();
         readerGetPressedKeys(keyArray);

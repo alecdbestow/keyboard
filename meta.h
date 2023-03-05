@@ -6,15 +6,16 @@
 enum{CAP_FIRST_WORD = 0, LOWER_FIRST_CHAR, UPPER_FIRST_WORD, CHAR, ORDER};
 
 typedef struct action_stream ActionStream;
+typedef struct match Match;
 
-
-void metaComma(ActionStream *a, char comma);
-void metaStop(ActionStream *a, char stop);
-void metaCase(ActionStream *a, char arg);
-void metaRetroCase(ActionStream *a, char arg);
-void metaGlue(ActionStream *a, char arg);
-void metaAttach(ActionStream *a, char arg);
-void carryCap(ActionStream *a, char arg);
+void metaComma(ActionStream *a, Match *m, char order);
+void metaStop(ActionStream *a, Match *m, char order);
+void metaCase(ActionStream *a, Match *m, char order);
+void metaRetroCase(ActionStream *a, Match *m, char order);
+void metaGlue(ActionStream *a, Match *m, char order);
+void metaAttach(ActionStream *a, Match *m, char order);
+void carryCap(ActionStream *a, Match *m, char order);
+void metaRestart(ActionStream *a, Match *m, char order);
 
 
 #define MAX_MATCH_LENGTH 10
