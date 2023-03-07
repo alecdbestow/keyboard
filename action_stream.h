@@ -18,7 +18,8 @@
 typedef struct match
 {
     char arg;
-    char matchString[10];
+    char leftMatchString[10];
+    char rightMatchString[10];
     char *start;
     char *end;
 } Match;
@@ -26,7 +27,7 @@ typedef struct match
 typedef struct action
 {
     Stroke stroke;
-    uint8_t *translation;
+    char *translation;
     size_t length;
     struct action *nextAction;
     struct action *prevAction;
@@ -35,8 +36,8 @@ typedef struct action
 typedef struct compilerIndex
 {
     Action *actionsIndex;
-    uint8_t *outputIndex;
-    uint8_t *actionsOutputIndex;
+    char *outputIndex;
+    char *actionsOutputIndex;
 
     bool inCommand;
 
@@ -54,9 +55,9 @@ typedef struct action_stream
 {
     Action *end;
     Action actions[MAX_STORED_ACTIONS_LENGTH];
-    uint8_t actionsOutput[MAX_OUTPUT_LENGTH];
-    uint8_t outputOld[MAX_OUTPUT_LENGTH];
-    uint8_t output[MAX_OUTPUT_LENGTH];
+    char actionsOutput[MAX_OUTPUT_LENGTH];
+    char outputOld[MAX_OUTPUT_LENGTH];
+    char output[MAX_OUTPUT_LENGTH];
     Dictionary d;
     char spaceString[MAX_TRANSLATION_LENGTH];
     CompilerIndex ci; 
@@ -74,25 +75,20 @@ typedef struct commandMatch  {
 
 static size_t lstrcpy(char *dest, const char *source);
 void ActionStreamInit(ActionStream *a);
-Action *getBounded(ActionStream *a, Action *i);
 void ActionStreamGetCombinedStrokes(ActionStream *a, char* strokes, Action* start);
-
 void ActionStreamAddStroke(ActionStream *a, Stroke stroke);
 void ActionStreamUndo(ActionStream *a);
 void addString(ActionStream *a, Action *index, uint8_t *trans);
-//void compileActions(ActionStream *a);
 void ActionStreamCompileOutput(ActionStream *a);
 void ActionStreamCommandOutput(ActionStream *a);
-void callMatchFunc(ActionStream *a, CommandMatch *match, uint8_t order);
 bool outputOnce(ActionStream *a, bool checkIndex);
 bool inIndex(ActionStream *a, char *pos);
 Action *ActionStreamGetNextTranslation(ActionStream *a, Action *index);
-void skipPrefix(ActionStream *a, uint8_t *match);
-void findCommandMatch(ActionStream *a, CommandMatch *cm);
+void skipPrefix(ActionStream *a, char *match);
 bool prefix(const char *pre, const char *str);
 void ActionStreamWipeTranslations(ActionStream *a, Action *index);
 Action* ActionStreamSearchForTranslation(ActionStream *a, Action *index);
-void asdf(ActionStream *a, Action *index, Stroke stroke);
+void ActionStreamSearchForStroke(ActionStream *a, Action *index, Stroke stroke);
 
 
 

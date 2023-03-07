@@ -7,9 +7,11 @@
 #include "keyboard_reader.h"
 #include "stroke.h"
 
+
+
 int main() {
     StrokeGetter sg;
-
+    // Initialize file system
 
     strokeGetterInit(&sg);
 

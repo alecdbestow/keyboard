@@ -12,36 +12,31 @@
 #define IN_INDEX 
 
 static CommandMatch commands[NUM_COMMAND_MATCHES] =    {
-    {.match = {.matchString = "{,}", .arg = CHAR}, .func = metaComma},
-    {.match = {.matchString = "{:}", .arg = CHAR}, .func = metaComma},
-    {.match = {.matchString = "{;}", .arg = CHAR}, .func = metaComma},
-    {.match = {.matchString = "{.}", .arg = CHAR}, .func = metaStop},
-    {.match = {.matchString = "{!}", .arg = CHAR}, .func = metaStop},
-    {.match = {.matchString = "{?}", .arg = CHAR}, .func = metaStop},
-    {.match = {.matchString = "{-|}", .arg = CAP_FIRST_WORD}, .func = metaCase},
-    {.match = {.matchString = "{>}", .arg = LOWER_FIRST_CHAR}, .func = metaCase},
-    {.match = {.matchString = "{<}", .arg = UPPER_FIRST_WORD}, .func = metaCase},
-    {.match = {.matchString = "{*-|}", .arg = CAP_FIRST_WORD}, .func = metaRetroCase},
-    {.match = {.matchString = "{*>}", .arg = LOWER_FIRST_CHAR}, .func = metaRetroCase},
-    {.match = {.matchString = "{*<}", .arg = UPPER_FIRST_WORD}, .func = metaRetroCase},
-    {.match = {.matchString = "{^~|", .arg = UPPER_FIRST_WORD}, .func = carryCap},
-    {.match = {.matchString = "{~|#}", .arg = UPPER_FIRST_WORD}, .func = carryCap},
-    {.match = {.matchString = "{&#}", .arg = ORDER}, .func = metaGlue},
-    {.match = {.matchString = "{^}", .arg = CHAR}, .func = metaAttach},
-    {.match = {.matchString = "{^#}", .arg = CHAR}, .func = metaAttach},
-    {.match = {.matchString = "{#^}", .arg = CHAR}, .func = metaAttach},
-    {.match = {.matchString = "{}", .arg = CHAR}, .func = metaRestart}
+    {.match = {.leftMatchString = "{,}", .rightMatchString = "", .arg = CHAR}, .func = metaComma},
+    {.match = {.leftMatchString = "{:}", .rightMatchString = "", .arg = CHAR}, .func = metaComma},
+    {.match = {.leftMatchString = "{;}", .rightMatchString = "", .arg = CHAR}, .func = metaComma},
+    {.match = {.leftMatchString = "{.}", .rightMatchString = "", .arg = CHAR}, .func = metaStop},
+    {.match = {.leftMatchString = "{!}", .rightMatchString = "", .arg = CHAR}, .func = metaStop},
+    {.match = {.leftMatchString = "{?}", .rightMatchString = "", .arg = CHAR}, .func = metaStop},
+    {.match = {.leftMatchString = "{-|}", .rightMatchString = "", .arg = CAP_FIRST_WORD}, .func = metaCase},
+    {.match = {.leftMatchString = "{>}", .rightMatchString = "", .arg = LOWER_FIRST_CHAR}, .func = metaCase},
+    {.match = {.leftMatchString = "{<}", .rightMatchString = "", .arg = UPPER_FIRST_WORD}, .func = metaCase},
+    {.match = {.leftMatchString = "{*-|}", .rightMatchString = "", .arg = CAP_FIRST_WORD}, .func = metaRetroCase},
+    {.match = {.leftMatchString = "{*>}", .rightMatchString = "", .arg = LOWER_FIRST_CHAR}, .func = metaRetroCase},
+    {.match = {.leftMatchString = "{*<}", .rightMatchString = "", .arg = UPPER_FIRST_WORD}, .func = metaRetroCase},
+    {.match = {.leftMatchString = "{^~|", .rightMatchString = "}", .arg = UPPER_FIRST_WORD}, .func = carryCap},
+    {.match = {.leftMatchString = "{~|", .rightMatchString = "}", .arg = UPPER_FIRST_WORD}, .func = carryCap},
+    {.match = {.leftMatchString = "{&", .rightMatchString = "}", .arg = ORDER}, .func = metaGlue},
+    {.match = {.leftMatchString = "{^}", .rightMatchString = "", .arg = CHAR}, .func = metaAttach},
+    {.match = {.leftMatchString = "{^", .rightMatchString = "}", .arg = CHAR}, .func = metaAttach},
+    {.match = {.leftMatchString = "{}", .rightMatchString = "", .arg = CHAR}, .func = metaRestart},
+    {.match = {.leftMatchString = "{", .rightMatchString = "^}", .arg = CHAR}, .func = metaAttach}
+
 };
 
 
 
 bool regex(Match *match)    {
-    uint i = 0;
-    while (match->matchString[i] == inputString[i] || (match->matchString[i] == '#' && !()))
-    if (match->matchString[0] == '#')  {
-        while (!prefix())
-            
-    }
 }
 
 
@@ -56,7 +51,7 @@ size_t lstrcpy(char *dest, const char *source)    {
 }
 
 void initAction(Action *a)  {
-    memset(a->stroke, 0, NUM_STENO_CHARS);
+    a->stroke[0] = '\0';
     a->translation = NULL;//memset(a->translation, 0, MAX_TRANSLATION_LENGTH);
     a->length = 0;
 }
@@ -141,7 +136,7 @@ void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
     // start on an action with a translation
     index = ActionStreamGetNextTranslation(a, index);
  
-    asdf(a, index, stroke);
+    ActionStreamSearchForStroke(a, index, stroke);
     // compile with the new stroke added
     ActionStreamCompileOutput(a);
 
@@ -173,20 +168,13 @@ void ActionStreamUndo(ActionStream * a)
     while (numStrokes >= 1) {
         a->end = a->end->nextAction;
         strcpy(a->end->stroke, history[numStrokes]);
-        asdf(a, a->end, history[numStrokes]);
+        ActionStreamSearchForStroke(a, a->end, history[numStrokes]);
         numStrokes--;
     }
     ActionStreamCompileOutput(a);
-    // find last translation
-    // for every stroke in that translation but the last one:
-    // copy all the old strokes from that translation into an array of strokes
-    // remember the old output array
-    // delete all the strokes from that translation
-
-    // add them to the action stream one by one
 }
 
-void asdf(ActionStream *a, Action *index, Stroke stroke) {
+void ActionStreamSearchForStroke(ActionStream *a, Action *index, Stroke stroke) {
     //check all the strokes for translation
     index = ActionStreamSearchForTranslation(a, index);
 
@@ -313,9 +301,7 @@ bool prefix(const char *pre, const char *str)
     return strncmp(pre, str, strlen(pre)) == 0;
 }
 
-
-// iterate over all the possible command matches and return the first match
-void findCommandMatch(ActionStream *a, CommandMatch *cm)    {
+Func findMatch(ActionStream *a, Match *m)  {
     uint numLeft = 0;
     uint numRight = 0;
     
@@ -325,30 +311,61 @@ void findCommandMatch(ActionStream *a, CommandMatch *cm)    {
             index++;
         }   else if (index[0] == '{')   {
             if (numLeft == 0)   {
-                cm->match.start = index;
+                m->start = index;
             }
             numLeft++;
         }   else if (index[0] == '}')   {
-            cm->match.end = index;
+            m->end = index;
             numRight++;
         }
-        if (numLeft - numRight == 1)    {
-            // only search for commands in the top level of the command
-            for (size_t i = 0; i < NUM_COMMAND_MATCHES; i++)    {
-                if (prefix(commands[i].match.matchString, index))  {
-                    cm->func = commands[i].func;
-                    strcpy(cm->match.matchString, commands[i].match.matchString);
-                    cm->match.arg = commands[i].match.arg;
-                }
-            }
-        }
-        index++;
-
     } while(inIndex(a, index) && numLeft > numRight);
+
+    for (size_t i = 0; i < NUM_COMMAND_MATCHES; i++)    {
+
+        bool prefixFound = false;
+        bool suffixFound = false;
+        index = m->start;
+        for (
+            uint j = 0; 
+            (
+                index + j < m->end &&
+                (index[j] == commands[i].match.leftMatchString[j] ||
+                commands[i].match.leftMatchString[j] == '\0')
+            );
+            j++)   {
+                if (commands[i].match.leftMatchString[j + 1] == '\0')   {
+                    prefixFound = true;
+                    break;
+                }
+        }
+        index = m->end;
+        for (
+            uint j = 0; 
+            (
+                prefixFound &&
+                index - j > m->start &&
+                (index[-j] == commands[i].match.rightMatchString[j] || 
+                commands[i].match.rightMatchString[j] == '\0')
+            );
+            j++)   {
+                if (commands[i].match.rightMatchString[j] == '\0')   {
+                    suffixFound = true;
+                    m->end -= j;
+                    break;
+                }
+        }
+        if (suffixFound && prefixFound) {
+            strcpy(m->leftMatchString, commands[i].match.leftMatchString);
+            strcpy(m->rightMatchString, commands[i].match.rightMatchString);
+            return commands[i].func;
+        }
+    }
+    return NULL;
 }
 
+
 // given a prefix: match, increment the action index over it
-void skipPrefix(ActionStream *a, uint8_t *match)    {
+void skipPrefix(ActionStream *a, char *match)    {
     if (prefix(match, a->ci.actionsOutputIndex))    {
         a->ci.actionsOutputIndex += strlen(match);
     }
@@ -358,27 +375,26 @@ void skipPrefix(ActionStream *a, uint8_t *match)    {
 // outputs from a '{' char until a '}' and performs the relevant formatting
 // actually writes to a->output
 void performCommandOutput(ActionStream *a, Match *m) {
-    do  {
-        skipPrefix(a, m->matchString);
-    }   while   (
-        outputOnce(a, true) && 
-        a->ci.actionsOutputIndex >= m->start && 
-        a->ci.actionsOutputIndex <= m->end
-    );
+    skipPrefix(a, m->leftMatchString);
+    while   (
+        a->ci.actionsOutputIndex < m->end &&
+        outputOnce(a, true)
+    )   {}
+    skipPrefix(a, m->rightMatchString);
 }
 
 // used to call the match function either at the begining of 
 void ActionStreamCommandOutput(ActionStream *a)    {
 
     Match match = {0};
-    CommandMatch cm;
-    findCommandMatch(a, &cm);
-    if (cm.match.start && cm.match.end)  {
-            cm.func(a, &(cm.match), PRE);
-            performCommandOutput(a, &(cm.match));
-            cm.func(a, &(cm.match), POST);
+    Func func = findMatch(a, &match);
+    if (func)  {
+            func(a, &match, PRE);
+            performCommandOutput(a, &match);
+            func(a, &match, POST);
     }    else   {
         // TODO
+        a->ci.actionsOutputIndex = match.end + strlen(match.rightMatchString);
     }
 }
 

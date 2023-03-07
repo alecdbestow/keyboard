@@ -6,7 +6,7 @@
 void metaComma(ActionStream *a, Match *m, char order)  {
     if (order == PRE)   {
         metaAttach(a, m, order);
-        a->ci.outputIndex[0] = m->matchString[1];
+        a->ci.outputIndex[0] = m->leftMatchString[1];
         a->ci.outputIndex++;
     }   else    {
 
@@ -20,7 +20,7 @@ void metaComma(ActionStream *a, Match *m, char order)  {
 void metaStop(ActionStream *a, Match *m, char order)    {
     //metaAttach(a, stop);
     if (order == PRE)   {
-        a->ci.outputIndex[0] = m->matchString[1];
+        a->ci.outputIndex[0] = m->leftMatchString[1];
         a->ci.capNext = true;
         a->ci.outputIndex++;
     }   else    {
@@ -56,8 +56,8 @@ void findPreviousWordStart(ActionStream *a)   {
 }
 
 void metaRetroCase(ActionStream *a, Match *m, char order)    {
-    uint8_t *oldactionsOutputIndex = a->ci.actionsOutputIndex;
-    uint8_t *oldoutputIndex = a->ci.outputIndex;
+    char *oldactionsOutputIndex = a->ci.actionsOutputIndex;
+    char *oldoutputIndex = a->ci.outputIndex;
     findPreviousWordStart(a);
     metaCase(a, m, order);
     a->ci.actionsOutputIndex = a->ci.outputIndex;
