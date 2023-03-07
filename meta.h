@@ -3,7 +3,7 @@
 
 #include "action_stream.h"
 
-enum{CAP_FIRST_WORD = 0, LOWER_FIRST_CHAR, UPPER_FIRST_WORD, CHAR, ORDER};
+enum{CAP_FIRST_WORD = 0, LOWER_FIRST_CHAR, UPPER_FIRST_WORD, CHAR, ORDER, ATTACH_LEFT, ATTACH_RIGHT, ATTACH_BOTH};
 
 typedef struct action_stream ActionStream;
 typedef struct match Match;

@@ -11,14 +11,14 @@
 
 int main() {
     StrokeGetter sg;
-    // Initialize file system
+    // Initializehigh high high high high high testing high I like I wanna shopping in a
 
     strokeGetterInit(&sg);
 
     ActionStream a;
     ActionStreamInit(&a);
 
-    char typingString[MAX_OUTPUT_LENGTH] = {0};
+    char typingString[MAX_OUTPUT_LENGTH] = {0}; 
 
     typerInit();
     readerInit();
@@ -26,21 +26,20 @@ int main() {
 
     bool keyArray[NUM_KEYS] = {0};
     bool oldKeyArray[NUM_KEYS] = {0};
-    /*
+    
     for (int i = 0; i < 40; i++)    {
         ActionStreamAddStroke(&a, "HAOEU");
     }
     ActionStreamAddStroke(&a, "TEFT");
-    ActionStreamAddStroke(&a, "PHRAEU");
     getStringDiff(a.outputOld, a.output, typingString);
 
 
-    ActionStreamAddStroke(&a, "HAOEU");
-    //ActionStreamAddStroke(&a, "KPA");
+    ActionStreamAddStroke(&a, "-G");
+    //ActionStreamAddStroke(&a, "KPA");    did  
     ActionStreamAddStroke(&a, "HAOEU");
     ActionStreamAddStroke(&a, "PWAOEUPB");
     ActionStreamUndo(&a);
-*/
+
     while (1) {
         tud_task();
         readerGetPressedKeys(keyArray);

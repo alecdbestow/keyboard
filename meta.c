@@ -11,15 +11,12 @@ void metaComma(ActionStream *a, Match *m, char order)  {
     }   else    {
 
     }
-
-    //metaAttach(a, comma);
-
 }
 
 
 void metaStop(ActionStream *a, Match *m, char order)    {
-    //metaAttach(a, stop);
     if (order == PRE)   {
+        metaAttach(a, m, order);
         a->ci.outputIndex[0] = m->leftMatchString[1];
         a->ci.capNext = true;
         a->ci.outputIndex++;
@@ -31,6 +28,7 @@ void metaStop(ActionStream *a, Match *m, char order)    {
 
 void metaCase(ActionStream *a, Match *m, char order) {
     if (order == PRE)   {
+        metaAttach(a, m, order);
         if (m->arg == CAP_FIRST_WORD)  {
             a->ci.capNext = true;
             a->ci.lowerNext = false;
@@ -61,7 +59,9 @@ void metaRetroCase(ActionStream *a, Match *m, char order)    {
     findPreviousWordStart(a);
     metaCase(a, m, order);
     a->ci.actionsOutputIndex = a->ci.outputIndex;
-    while ((a->ci.outputIndex < oldoutputIndex) && outputOnce(a, false)){}
+    while ((a->ci.outputIndex < oldoutputIndex))    {
+        outputOnce(a);
+    }
     a->ci.actionsOutputIndex = oldactionsOutputIndex;
     a->ci.outputIndex = oldoutputIndex;
     
@@ -88,7 +88,11 @@ void metaGlue(ActionStream *a, Match *m, char order) {
 }
 
 void metaAttach(ActionStream *a, Match *m, char order)   {
-    a->ci.outputIndex -= strlen(a->spaceString);
+    if (order == PRE && m->arg != ATTACH_RIGHT )   {
+        a->ci.outputIndex -= strlen(a->spaceString);
+    }   else if (order == POST && m->arg != ATTACH_LEFT)   {
+        a->ci.attachNext = true;
+    }
 }
 
 void carryCap(ActionStream *a, Match *m, char order)    {

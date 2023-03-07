@@ -81,7 +81,7 @@ void ActionStreamUndo(ActionStream *a);
 void addString(ActionStream *a, Action *index, uint8_t *trans);
 void ActionStreamCompileOutput(ActionStream *a);
 void ActionStreamCommandOutput(ActionStream *a);
-bool outputOnce(ActionStream *a, bool checkIndex);
+void outputOnce(ActionStream *a);
 bool inIndex(ActionStream *a, char *pos);
 Action *ActionStreamGetNextTranslation(ActionStream *a, Action *index);
 void skipPrefix(ActionStream *a, char *match);

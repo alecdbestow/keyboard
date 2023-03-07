@@ -8,9 +8,11 @@
 //  W        W     W  W
 
 
-#define NUM_COMMAND_MATCHES 19
+#define NUM_COMMAND_MATCHES 20
 #define IN_INDEX 
 
+
+// if two matchs apply for a single string, put the more strict match at the top
 static CommandMatch commands[NUM_COMMAND_MATCHES] =    {
     {.match = {.leftMatchString = "{,}", .rightMatchString = "", .arg = CHAR}, .func = metaComma},
     {.match = {.leftMatchString = "{:}", .rightMatchString = "", .arg = CHAR}, .func = metaComma},
@@ -27,10 +29,11 @@ static CommandMatch commands[NUM_COMMAND_MATCHES] =    {
     {.match = {.leftMatchString = "{^~|", .rightMatchString = "}", .arg = UPPER_FIRST_WORD}, .func = carryCap},
     {.match = {.leftMatchString = "{~|", .rightMatchString = "}", .arg = UPPER_FIRST_WORD}, .func = carryCap},
     {.match = {.leftMatchString = "{&", .rightMatchString = "}", .arg = ORDER}, .func = metaGlue},
-    {.match = {.leftMatchString = "{^}", .rightMatchString = "", .arg = CHAR}, .func = metaAttach},
-    {.match = {.leftMatchString = "{^", .rightMatchString = "}", .arg = CHAR}, .func = metaAttach},
+    {.match = {.leftMatchString = "{^}", .rightMatchString = "", .arg = ATTACH_RIGHT}, .func = metaAttach},
+    {.match = {.leftMatchString = "{^", .rightMatchString = "^}", .arg = ATTACH_BOTH}, .func = metaAttach},
+    {.match = {.leftMatchString = "{^", .rightMatchString = "}", .arg = ATTACH_LEFT}, .func = metaAttach},
     {.match = {.leftMatchString = "{}", .rightMatchString = "", .arg = CHAR}, .func = metaRestart},
-    {.match = {.leftMatchString = "{", .rightMatchString = "^}", .arg = CHAR}, .func = metaAttach}
+    {.match = {.leftMatchString = "{", .rightMatchString = "^}", .arg = ATTACH_RIGHT}, .func = metaAttach}
 
 };
 
@@ -105,6 +108,10 @@ void addString(ActionStream *a, Action *index, uint8_t *trans) {
 // add a stroke to the action stream and compile the output
 // This is the main input function for the action stream
 void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
+    if (strcmp(stroke, "*") == 0)  {
+        ActionStreamUndo(a);
+        return;
+    }
     // iterate the end index
     a->end = a->end->nextAction;
     
@@ -236,63 +243,60 @@ bool inIndex(ActionStream *a, char *pos)  {
 // outputs into the output stream, a command is seen as a single output
 // returns false if the action index is NULL 
 // OR actionsOutputIndex is outside of the ci.index action and the checkIndex bool is true
-bool outputOnce(ActionStream *a, bool checkIndex)    {
-    if (a->ci.actionsOutputIndex && inIndex(a, a->ci.actionsOutputIndex) || !checkIndex)  {
-        if (prefix(a->spaceString, a->ci.actionsOutputIndex))   {
-            if (a->ci.attachNext)   {
-                a->ci.attachNext = false;
-                a->ci.actionsOutputIndex += strlen(a->spaceString);
-                
-            } 
-            else if (a->ci.finishedCapWord)  {
-                a->ci.capWord = false;
-            }
-
-        }
-        if (a->ci.actionsOutputIndex[0] == '\\')   {
-            a->ci.actionsOutputIndex++;
-            a->ci.outputIndex[0] = a->ci.actionsOutputIndex[0];
-        }
-        else if (a->ci.actionsOutputIndex[0] == '{')   {
-            ActionStreamCommandOutput(a);
-            return true;
-        }
-        else if (a->ci.actionsOutputIndex[0] == '}')    {
-            a->ci.actionsOutputIndex++;
-            return true;
-        }
-        else if (isalpha(a->ci.actionsOutputIndex[0])) {
-            if (a->ci.capNext)    {
-                a->ci.outputIndex[0] = toupper(a->ci.actionsOutputIndex[0]);
-                a->ci.capNext = false;
-            }
-            else if (a->ci.lowerNext)   {
-                a->ci.outputIndex[0] = tolower(a->ci.actionsOutputIndex[0]);
-                a->ci.lowerNext = false;
-            }
-            else if (a->ci.capWord)   {
-                a->ci.outputIndex[0] = toupper(a->ci.actionsOutputIndex[0]);
-                a->ci.finishedCapWord = true;
-            }
-            else    {
-                a->ci.outputIndex[0] = a->ci.actionsOutputIndex[0];
-            }
-        }   else    {
-            a->ci.outputIndex[0] = a->ci.actionsOutputIndex[0];
-        }
+void outputOnce(ActionStream *a)    {
+    if (prefix(a->spaceString, a->ci.actionsOutputIndex))   {
+        if (a->ci.attachNext)   {
+            a->ci.attachNext = false;
+            a->ci.actionsOutputIndex += strlen(a->spaceString);
             
+        } 
+        else if (a->ci.finishedCapWord)  {
+            a->ci.capWord = false;
+        }
+
+    }
+    if (a->ci.actionsOutputIndex[0] == '\\')   {
         a->ci.actionsOutputIndex++;
-        a->ci.outputIndex++;
-        return true;
+        a->ci.outputIndex[0] = a->ci.actionsOutputIndex[0];
+    }
+    else if (a->ci.actionsOutputIndex[0] == '{')   {
+        ActionStreamCommandOutput(a);
+        return;
+    }
+    else if (a->ci.actionsOutputIndex[0] == '}')    {
+        a->ci.actionsOutputIndex++;
+        return;
+    }
+    else if (isalpha(a->ci.actionsOutputIndex[0])) {
+        if (a->ci.capNext)    {
+            a->ci.outputIndex[0] = toupper(a->ci.actionsOutputIndex[0]);
+            a->ci.capNext = false;
+        }
+        else if (a->ci.lowerNext)   {
+            a->ci.outputIndex[0] = tolower(a->ci.actionsOutputIndex[0]);
+            a->ci.lowerNext = false;
+        }
+        else if (a->ci.capWord)   {
+            a->ci.outputIndex[0] = toupper(a->ci.actionsOutputIndex[0]);
+            a->ci.finishedCapWord = true;
+        }
+        else    {
+            a->ci.outputIndex[0] = a->ci.actionsOutputIndex[0];
+        }
     }   else    {
-        return false;
-    }  
+        a->ci.outputIndex[0] = a->ci.actionsOutputIndex[0];
+    }
+        
+    a->ci.actionsOutputIndex++;
+    a->ci.outputIndex++;
 }
 
 // iterate over an action, and place its output in the action stream output
 void outputAction(ActionStream *a) {
 
-    while (outputOnce(a, true))  {}
+    while (inIndex(a, a->ci.actionsOutputIndex))  {
+        outputOnce(a);
+    }
 }
 
 // returns true if a the string: str, starts with the prefix string: pre
@@ -318,6 +322,7 @@ Func findMatch(ActionStream *a, Match *m)  {
             m->end = index;
             numRight++;
         }
+        index++;
     } while(inIndex(a, index) && numLeft > numRight);
 
     for (size_t i = 0; i < NUM_COMMAND_MATCHES; i++)    {
@@ -328,35 +333,37 @@ Func findMatch(ActionStream *a, Match *m)  {
         for (
             uint j = 0; 
             (
-                index + j < m->end &&
+                index + j <= m->end + 1 &&
                 (index[j] == commands[i].match.leftMatchString[j] ||
                 commands[i].match.leftMatchString[j] == '\0')
             );
             j++)   {
-                if (commands[i].match.leftMatchString[j + 1] == '\0')   {
+                if (commands[i].match.leftMatchString[j] == '\0')   {
                     prefixFound = true;
                     break;
                 }
         }
         index = m->end;
+        uint len = strlen(commands[i].match.rightMatchString);
         for (
             uint j = 0; 
             (
                 prefixFound &&
-                index - j > m->start &&
-                (index[-j] == commands[i].match.rightMatchString[j] || 
+                index - len + 1 + j > m->start &&
+                (index[-len + 1 + j] == commands[i].match.rightMatchString[j] || 
                 commands[i].match.rightMatchString[j] == '\0')
             );
             j++)   {
                 if (commands[i].match.rightMatchString[j] == '\0')   {
                     suffixFound = true;
-                    m->end -= j;
+                    m->end -= (j - 1);
                     break;
                 }
         }
         if (suffixFound && prefixFound) {
             strcpy(m->leftMatchString, commands[i].match.leftMatchString);
             strcpy(m->rightMatchString, commands[i].match.rightMatchString);
+            m->arg = commands[i].match.arg;
             return commands[i].func;
         }
     }
@@ -378,8 +385,10 @@ void performCommandOutput(ActionStream *a, Match *m) {
     skipPrefix(a, m->leftMatchString);
     while   (
         a->ci.actionsOutputIndex < m->end &&
-        outputOnce(a, true)
-    )   {}
+        inIndex(a, a->ci.actionsOutputIndex)
+    )   {
+        outputOnce(a);
+        }
     skipPrefix(a, m->rightMatchString);
 }
 
@@ -410,7 +419,6 @@ bool incrementIndex(ActionStream *a)   {
 }
 
 void ActionStreamCompileOutput(ActionStream *a)   {
-    //set the first index as the end + 2
     a->ci.actionsIndex = a->end->nextAction->nextAction;
 
     //output from the beginning of each string
