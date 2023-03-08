@@ -7,17 +7,15 @@
 #include "keyboard_reader.h"
 #include "stroke.h"
 
-
-
 int main() {
     StrokeGetter sg;
-    // Initializehigh high high
+    // Initializehigh high high high high high high high high high high high high high high high high high high high high high high high high high high .
     strokeGetterInit(&sg);
 
     ActionStream a;
     ActionStreamInit(&a);
 
-    char typingString[MAX_OUTPUT_LENGTH] = {0}; 
+    char typingString[MAX_OUTPUT_LENGTH] = {0};
 
     typerInit();
     readerInit();
@@ -26,6 +24,10 @@ int main() {
     bool keyArray[NUM_KEYS] = {0};
     bool oldKeyArray[NUM_KEYS] = {0};
     
+    for (int i = 0; i < 20; i++)    {
+        ActionStreamAddStroke(&a, "HAOEU");
+    }
+    ActionStreamAddStroke(&a, "-FPL");
     while (1) {
         tud_task();
         readerGetPressedKeys(keyArray);

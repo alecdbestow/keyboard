@@ -40,7 +40,7 @@ typedef struct compilerIndex
     char *actionsOutputIndex;
 
     bool inCommand;
-
+    bool spaceNext;
     bool capWord;
     bool lowerNext;
     bool capNext;

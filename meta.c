@@ -9,7 +9,7 @@ void metaComma(ActionStream *a, Match *m, char order)  {
         a->ci.outputIndex[0] = m->leftMatchString[1];
         a->ci.outputIndex++;
     }   else    {
-
+        a->ci.spaceNext = true;
     }
 }
 
@@ -21,7 +21,7 @@ void metaStop(ActionStream *a, Match *m, char order)    {
         a->ci.capNext = true;
         a->ci.outputIndex++;
     }   else    {
-
+        a->ci.spaceNext = true;
     }
 
 }
@@ -89,7 +89,10 @@ void metaGlue(ActionStream *a, Match *m, char order) {
 
 void metaAttach(ActionStream *a, Match *m, char order)   {
     if (order == PRE && m->arg != ATTACH_RIGHT )   {
-        a->ci.outputIndex -= strlen(a->spaceString);
+        if (prefix(a->ci.outputIndex - strlen(a->spaceString), a->spaceString))   {
+            a->ci.outputIndex -= strlen(a->spaceString);
+        }
+        
     }   else if (order == POST && m->arg != ATTACH_LEFT)   {
         a->ci.attachNext = true;
     }

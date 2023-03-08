@@ -79,6 +79,7 @@ void ActionStreamInit(ActionStream *a)  {
     a->ci.outputIndex = a->output;
     a->ci.actionsOutputIndex = a->actionsOutput;
 
+    a->ci.spaceNext = false;
     a->ci.attachNext = false;
     a->ci.capNext = false;
     a->ci.capWord = false;
@@ -244,7 +245,10 @@ bool inIndex(ActionStream *a, char *pos)  {
 // returns false if the action index is NULL 
 // OR actionsOutputIndex is outside of the ci.index action and the checkIndex bool is true
 void outputOnce(ActionStream *a)    {
+
+    
     if (prefix(a->spaceString, a->ci.actionsOutputIndex))   {
+        a->ci.spaceNext = false;
         if (a->ci.attachNext)   {
             a->ci.attachNext = false;
             a->ci.actionsOutputIndex += strlen(a->spaceString);
@@ -254,6 +258,15 @@ void outputOnce(ActionStream *a)    {
             a->ci.capWord = false;
         }
 
+    }   else if (a->ci.spaceNext && !a->ci.attachNext)  {
+        a->ci.spaceNext = false;
+        char *oldIndex = a->ci.actionsOutputIndex;
+        a->ci.actionsOutputIndex = a->spaceString;
+        for (uint i = 0; i < strlen(a->spaceString); i++)    {
+            outputOnce(a);
+        }
+        a->ci.actionsOutputIndex = oldIndex;
+        
     }
     if (a->ci.actionsOutputIndex[0] == '\\')   {
         a->ci.actionsOutputIndex++;
