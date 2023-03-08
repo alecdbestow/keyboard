@@ -25,12 +25,6 @@ int main() {
 
     bool keyArray[NUM_KEYS] = {0};
     bool oldKeyArray[NUM_KEYS] = {0};
-    for (uint i = 0; i < 21; i++)   {
-        ActionStreamAddStroke(&a, "HAOEU");
-    }
-
-    ActionStreamAddStroke(&a, "*"); // bug where this outputs instead of deleting
-    getStringDiff(a.outputOld, a.output, typingString);
     
     while (1) {
         tud_task();

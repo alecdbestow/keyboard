@@ -419,7 +419,7 @@ bool incrementIndex(ActionStream *a)   {
 }
 
 void ActionStreamCompileOutput(ActionStream *a)   {
-    a->ci.actionsIndex = a->end->nextAction->nextAction;
+    a->ci.actionsIndex = a->end->nextAction;
 
     //output from the beginning of each string
     a->ci.actionsOutputIndex = a->actionsOutput;

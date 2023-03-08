@@ -110,8 +110,8 @@ void getTranslation(Dictionary *d, char *input, char *output)  {
             return;
         }   else    {
             char str[20];
-            sprintf(str, "%d", hash);
-            hash = rc_crc32(str, strlen(input));
+            sprintf(str, "%u", hash);
+            hash = rc_crc32(str, strlen(str));
             d->pos = getPos(d, hash);
             readSd(d);
         }
