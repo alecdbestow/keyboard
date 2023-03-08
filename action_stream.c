@@ -159,7 +159,7 @@ void ActionStreamUndo(ActionStream * a)
     ActionStreamCompileOutput(a);
     strcpy(a->outputOld, a->output);
 
-    while (index != a->end->nextAction) {
+    while (numStrokes < MAX_NUM_STROKES) {
         a->end = a->end->prevAction;
         strcpy(history[numStrokes], index->stroke);
         index->stroke[0] = '\0';
@@ -231,7 +231,7 @@ Action* ActionStreamSearchForTranslation(ActionStream *a, Action *index)  {
         }
         index = index->nextAction;
     }
-    return index;
+    return a->end;
 }
 
 // checks wether the actionsOutputIndex is within the translation of the ci.index translation
