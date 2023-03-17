@@ -50,6 +50,8 @@
         "binary_info.h": "c",
         "keyboard_reader.h": "c",
         "usb.h": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "action.h": "c",
+        "limits": "cpp"
     }
 }

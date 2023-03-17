@@ -24,10 +24,11 @@ int main() {
     bool keyArray[NUM_KEYS] = {0};
     bool oldKeyArray[NUM_KEYS] = {0};
     
-    for (int i = 0; i < 20; i++)    {
+    //for (int i = 0; i < 20; i++)    {
         ActionStreamAddStroke(&a, "HAOEU");
-    }
+    //}
     ActionStreamAddStroke(&a, "-FPL");
+    ActionStreamAddStroke(&a, "HAOEU");
     while (1) {
         tud_task();
         readerGetPressedKeys(keyArray);

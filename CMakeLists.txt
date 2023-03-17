@@ -10,10 +10,12 @@ pico_sdk_init()
 #        -Werror
 #        )
 add_subdirectory(FatFs_SPI)
-
-
-
-
+add_subdirectory(regex)
+add_library(string_help STATIC)
+target_sources(string_help PUBLIC 
+    ${CMAKE_CURRENT_LIST_DIR}/string_help.c
+)
+target_link_libraries(string_help PUBLIC pico_stdlib)
 
 add_library(dict STATIC)
 target_include_directories(dict INTERFACE
@@ -25,6 +27,18 @@ target_sources(dict PUBLIC
 )
 target_link_libraries(dict PUBLIC pico_stdlib FatFs_SPI)
 
+
+add_library(keyboard_reader STATIC)
+target_include_directories(keyboard_reader PUBLIC 
+    ${CMAKE_CURRENT_LIST_DIR}
+)
+target_sources(keyboard_reader PUBLIC 
+    ${CMAKE_CURRENT_LIST_DIR}/keyboard_reader.c
+)
+target_link_libraries(keyboard_reader PUBLIC pico_stdlib tinyusb_device tinyusb_board)
+
+
+
 add_library(stroke STATIC)
 target_include_directories(stroke INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}
@@ -34,14 +48,32 @@ target_sources(stroke PUBLIC
 )
 target_link_libraries(stroke PUBLIC pico_stdlib)
 
+add_library(match STATIC)
+target_sources(match PUBLIC 
+    ${CMAKE_CURRENT_LIST_DIR}/match.c
+)
+target_link_libraries(match PUBLIC pico_stdlib string_help)
 
+
+add_library(action STATIC)
+target_sources(action PUBLIC 
+    ${CMAKE_CURRENT_LIST_DIR}/action.c
+)
+target_link_libraries(action PUBLIC pico_stdlib match stroke)
+
+
+add_library(outputter STATIC)
+target_sources(outputter PUBLIC 
+    ${CMAKE_CURRENT_LIST_DIR}/outputter.c
+)
+target_link_libraries(outputter PUBLIC pico_stdlib action match string_help)
 
 
 add_library(meta STATIC)
 target_sources(meta PUBLIC 
     ${CMAKE_CURRENT_LIST_DIR}/meta.c
 )
-target_link_libraries(meta PUBLIC pico_stdlib FatFs_SPI)
+target_link_libraries(meta PUBLIC pico_stdlib match)
 
 
 add_library(action_stream STATIC)
@@ -51,7 +83,7 @@ target_include_directories(action_stream PUBLIC
 target_sources(action_stream PUBLIC 
     ${CMAKE_CURRENT_LIST_DIR}/action_stream.c
 )
-target_link_libraries(action_stream PUBLIC pico_stdlib dict meta)
+target_link_libraries(action_stream PUBLIC pico_stdlib dict meta action outputter)
 
 
 
@@ -69,14 +101,7 @@ target_link_libraries(typer PUBLIC pico_stdlib tinyusb_device tinyusb_board acti
 
 
 
-add_library(keyboard_reader STATIC)
-target_include_directories(keyboard_reader PUBLIC 
-    ${CMAKE_CURRENT_LIST_DIR}
-)
-target_sources(keyboard_reader PUBLIC 
-    ${CMAKE_CURRENT_LIST_DIR}/keyboard_reader.c
-)
-target_link_libraries(keyboard_reader PUBLIC pico_stdlib tinyusb_device tinyusb_board)
+
 
 add_executable(main)
 target_include_directories(main PUBLIC 
