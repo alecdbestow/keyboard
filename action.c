@@ -1,35 +1,35 @@
-#include "action.h"
+#include "translation.h"
 #include "string.h"
 
-void ActionOutput(Action *a)
+void TranslationOutput(Translation *a)
 {
     
 }
 
-void ActionInit(Action *a)
+void TranslationInit(Translation *a)
 {
-    ActionRemoveTranslation(a);
-    ActionRemoveStroke(a);
+    TranslationRemoveTranslation(a);
+    TranslationRemoveStroke(a);
 }
 
-void ActionCopy(Action *dest, const Action *source)
+void TranslationCopy(Translation *dest, const Translation *source)
 {
-    strcpy(dest->translation, source->translation);
+    strcpy(dest->english, source->english);
     strcpy(dest->stroke, source->stroke);
     strcpy(dest->output, source->output);
 }
 
-void ActionAddTranslation(Action *a, Translation t)
+void TranslationAddEnglish(Translation *a, char *e)
 {
-    strcpy(a->translation, t);
+    strcpy(a->english, e);
 }
 
-void ActionRemoveStroke(Action *a)  {
+void TranslationRemoveStroke(Translation *a)  {
     a->stroke[0] = '\0';
 }
 
-void ActionRemoveTranslation(Action *a)
+void TranslationRemoveTranslation(Translation *a)
 {
-    a->translation[0] = '\0';
+    a->english[0] = '\0';
     a->output[0] = '\0';
 }

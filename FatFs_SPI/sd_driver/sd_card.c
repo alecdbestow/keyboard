@@ -92,8 +92,8 @@ specific language governing permissions and limitations under the License.
  *
  * SPI Protocol
  * ------------
- * The SD SPI protocol is based on transactions made up of 8-bit words, with
- * the host starting every bus transaction by asserting the CS signal low. The
+ * The SD SPI protocol is based on transtranslations made up of 8-bit words, with
+ * the host starting every bus transtranslation by asserting the CS signal low. The
  * card always responds to commands, data blocks and errors.
  *
  * The protocol supports a CRC, but by default it is off (except for the
@@ -981,7 +981,7 @@ static int in_sd_write_blocks(sd_card_t *pSD, const uint8_t *buffer,
         // Pre-erase setting prior to multiple block write operation
         sd_cmd(pSD, ACMD23_SET_WR_BLK_ERASE_COUNT, blockCnt, 1, 0);
 
-        // Some SD cards want to be deselected between every bus transaction:
+        // Some SD cards want to be deselected between every bus transtranslation:
         sd_spi_deselect_pulse(pSD);
 
         // Multiple block write command
@@ -1006,7 +1006,7 @@ static int in_sd_write_blocks(sd_card_t *pSD, const uint8_t *buffer,
         sd_spi_write(pSD, SPI_STOP_TRAN);
     }
     uint32_t stat = 0;
-    // Some SD cards want to be deselected between every bus transaction:
+    // Some SD cards want to be deselected between every bus transtranslation:
     sd_spi_deselect_pulse(pSD);
     status = sd_cmd(pSD, CMD13_SEND_STATUS, 0, false, &stat);
     return status;

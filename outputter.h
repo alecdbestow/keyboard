@@ -1,8 +1,9 @@
 #ifndef _OUTPUTTER_H_
 #define _OUTPUTTER_H_
 
-#include "action.h"
+#include "translation.h"
 #include "match.h"
+#include "regex/regex.h"
 
 typedef struct inOut {
     char *input;
@@ -10,7 +11,7 @@ typedef struct inOut {
 }   InOut;
 
 typedef struct outputter    {
-    Translation spaceString;
+    char spaceString[MAX_TRANSLATION_LENGTH];
     bool capNext;
     bool capWord;
     bool spaceNext;
@@ -19,6 +20,8 @@ typedef struct outputter    {
     bool lowerNext;
     bool glue;
     InOut inOut;
+    Regex atom;
+    Regex word;
 } Outputter;
 
 InOut OutputterOutputMatch(Outputter *o, InOut inOut, Match *m);
@@ -27,8 +30,8 @@ InOut OutputterOutputAlpha(Outputter *o, InOut inOut);
 InOut OutputterOutputSpace(Outputter *o, InOut inOut);
 InOut OutputterOutputOnce(Outputter *o, InOut inOut);
 void OutputterOutputNull(Outputter *o, InOut inOut);
-void OutputterCompileAction(Outputter *o, Action *a);
-void  OutputterPreCompileAction(Outputter *o, Action *a);
+void OutputterCompileTranslation(Outputter *o, Translation *a);
+void  OutputterPreCompileTranslation(Outputter *o, Translation *a);
 void  OutputterInit(Outputter *o);
 
 #endif

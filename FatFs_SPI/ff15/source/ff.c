@@ -6220,7 +6220,7 @@ FRESULT f_mkfs (
 			if (fsty == FS_FAT32) {		/* FAT32: Move FAT */
 				sz_rsv += n; b_fat += n;
 			} else {					/* FAT: Expand FAT */
-				if (n % n_fat) {	/* Adjust fractional error if needed */
+				if (n % n_fat) {	/* Adjust frtranslational error if needed */
 					n--; sz_rsv++; b_fat++;
 				}
 				sz_fat += n / n_fat;
@@ -6816,7 +6816,7 @@ static double i10x (int n)	/* Calculate 10^n in integer input */
 static void ftoa (
 	char* buf,	/* Buffer to output the floating point string */
 	double val,	/* Value to output */
-	int prec,	/* Number of fractional digits */
+	int prec,	/* Number of frtranslational digits */
 	TCHAR fmt	/* Notation */
 )
 {
@@ -6831,7 +6831,7 @@ static void ftoa (
 	if (isnan(val)) {			/* Not a number? */
 		er = "NaN";
 	} else {
-		if (prec < 0) prec = 6;	/* Default precision? (6 fractional digits) */
+		if (prec < 0) prec = 6;	/* Default precision? (6 frtranslational digits) */
 		if (val < 0) {			/* Negative? */
 			val = 0 - val; sign = '-';
 		} else {
@@ -6861,7 +6861,7 @@ static void ftoa (
 		if (!er) {	/* Not error condition */
 			if (sign == '-') *buf++ = sign;	/* Add a - if negative value */
 			do {				/* Put decimal number */
-				if (m == -1) *buf++ = ds;	/* Insert a decimal separator when get into fractional part */
+				if (m == -1) *buf++ = ds;	/* Insert a decimal separator when get into frtranslational part */
 				w = i10x(m);				/* Snip the highest digit d */
 				d = (int)(val / w); val -= d * w;
 				*buf++ = (char)('0' + d);	/* Put the digit */

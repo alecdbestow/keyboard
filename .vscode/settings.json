@@ -29,7 +29,7 @@
         "sd_card.h": "c",
         "hw_config.h": "c",
         "string.h": "c",
-        "action_stream.h": "c",
+        "stroke_stream.h": "c",
         "stroke.h": "c",
         "string": "c",
         "atomic": "cpp",
@@ -51,7 +51,7 @@
         "keyboard_reader.h": "c",
         "usb.h": "c",
         "type_traits": "c",
-        "action.h": "c",
+        "translation.h": "c",
         "limits": "cpp"
     }
 }

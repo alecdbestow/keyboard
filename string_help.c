@@ -13,7 +13,7 @@ bool prefix(const char *pre, const char *str)
     return strncmp(pre, str, strlen(pre)) == 0;
 }
 
-// given a prefix: match, increment the action index over it
+// given a prefix: match, increment the translation index over it
 char *skipPrefix(char *string, char *match)
 {
     if (prefix(match, string))  {

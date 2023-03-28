@@ -1,4 +1,4 @@
-#include "action_stream.h"
+#include "stroke_stream.h"
 #include "string_help.h"
 #include <string.h>
 #include <ctype.h>
@@ -10,10 +10,10 @@
 #define ACTIONS_END MAX_STORED_ACTIONS_LENGTH - 1
 
 
-void ActionStreamInit(ActionStream *a)  {
+void StrokeStreamInit(StrokeStream *a)  {
     dictInit(&(a->d), 0, 150000*10);
     for (int i = 0; i < MAX_STORED_ACTIONS_LENGTH; i++) {
-        ActionInit(a->actions + i);
+        TranslationInit(a->translations + i);
     }
     a->output[0] = '\0';
     a->outputOld[0] = '\0';
@@ -21,50 +21,50 @@ void ActionStreamInit(ActionStream *a)  {
 }
 
 //
-void ActionStreamGetCombinedStrokes(ActionStream *a, char* strokes, uint start)  {
-    strcpy(strokes, a->actions[start].stroke);
+void StrokeStreamGetCombinedStrokes(StrokeStream *a, char* strokes, uint start)  {
+    strcpy(strokes, a->translations[start].stroke);
     for (start++; start < MAX_STORED_ACTIONS_LENGTH; start++)    {
         strcat(strokes, "/");
-        strcat(strokes, a->actions[start].stroke);
+        strcat(strokes, a->translations[start].stroke);
     }
 }
 
-// add a stroke to the action stream and compile the output
-// This is the main input function for the action stream
-void ActionStreamAddStroke(ActionStream *a, Stroke stroke)   {
+// add a stroke to the translation stream and compile the output
+// This is the main input function for the translation stream
+void StrokeStreamAddStroke(StrokeStream *a, Stroke stroke)   {
 
     for (uint i = 0; i < ACTIONS_END; i++)    {
-        ActionCopy(a->actions + i, a->actions + i + 1);
+        TranslationCopy(a->translations + i, a->translations + i + 1);
     }
-    ActionInit(a->actions + ACTIONS_END);
-    strcpy(a->actions[ACTIONS_END].stroke, stroke);
+    TranslationInit(a->translations + ACTIONS_END);
+    strcpy(a->translations[ACTIONS_END].stroke, stroke);
         
     // compile the output and save it to oldOutput
     // needed to calculate the difference between the strings for typing
-    ActionStreamCompileOutput(a, a->outputOld);
+    StrokeStreamCompileOutput(a, a->outputOld);
 
     uint index = MAX_STORED_ACTIONS_LENGTH - MAX_NUM_STROKES;
-    // start on an action with a translation
-    index = ActionStreamGetNextTranslation(a, index);
+    // start on an translation with a translation
+    index = StrokeStreamGetNextTranslation(a, index);
  
-    ActionStreamSearchForStroke(a, index);
+    StrokeStreamSearchForStroke(a, index);
     // compile with the new stroke added
-    ActionStreamCompileOutput(a, a->output);
+    StrokeStreamCompileOutput(a, a->output);
 
 }
 /*
-void ActionStreamUndo(ActionStream * a)
+void StrokeStreamUndo(StrokeStream * a)
 {
-    Action *index = a->end;
+    Translation *index = a->end;
 
     Stroke history[MAX_NUM_STROKES] = {0};
     uint numStrokes = 0;
 
-    ActionStreamCompileOutput(a);
+    StrokeStreamCompileOutput(a);
     strcpy(a->outputOld, a->output);
 
     while (numStrokes < MAX_NUM_STROKES) {
-        a->end = a->end->prevAction;
+        a->end = a->end->prevTranslation;
         strcpy(history[numStrokes], index->stroke);
         index->stroke[0] = '\0';
         index->translation[0] = '\0';
@@ -73,43 +73,43 @@ void ActionStreamUndo(ActionStream * a)
             break;
         }
         numStrokes++;
-        index = index->prevAction;
+        index = index->prevTranslation;
         
     }
     while (numStrokes >= 1) {
-        a->end = a->end->nextAction;
+        a->end = a->end->nextTranslation;
         strcpy(a->end->stroke, history[numStrokes]);
-        ActionStreamSearchForStroke(a, a->end, history[numStrokes]);
+        StrokeStreamSearchForStroke(a, a->end, history[numStrokes]);
         numStrokes--;
     }
-    ActionStreamCompileOutput(a);
+    StrokeStreamCompileOutput(a);
 }
 */
-void ActionStreamSearchForStroke(ActionStream *a, uint index) {
+void StrokeStreamSearchForStroke(StrokeStream *a, uint index) {
     //check all the strokes for translation
     char translation[MAX_TRANSLATION_LENGTH];
     char combinedStrokes[NUM_STENO_CHARS * MAX_NUM_STROKES];
     while (index < MAX_STORED_ACTIONS_LENGTH)   {
-        if (a->actions[index].translation[0] != '\0' || index == ACTIONS_END)  {
+        if (a->translations[index].translation[0] != '\0' || index == ACTIONS_END)  {
 
-            ActionStreamGetCombinedStrokes(a, combinedStrokes, index);
+            StrokeStreamGetCombinedStrokes(a, combinedStrokes, index);
             getTranslation(&(a->d), combinedStrokes, translation);
             
             if (translation[0] != '\0')   {
-                strcpy(a->actions[index].translation, translation);
-                ActionStreamWipeTranslations(a, index + 1);
+                strcpy(a->translations[index].translation, translation);
+                StrokeStreamWipeTranslations(a, index + 1);
                 return;
             }
         }
         index++;
     }
     // if no translations are found, then output the stroke instead
-    strcpy(a->actions[ACTIONS_END].translation, a->actions[ACTIONS_END].stroke);
+    strcpy(a->translations[ACTIONS_END].translation, a->translations[ACTIONS_END].stroke);
 }
 
-uint ActionStreamGetNextTranslation(ActionStream *a, uint index) {
+uint StrokeStreamGetNextTranslation(StrokeStream *a, uint index) {
     while (index < ACTIONS_END) {
-        if (a->actions[index].translation[0] != '\0') {
+        if (a->translations[index].translation[0] != '\0') {
             break;
         }
         index++;
@@ -117,33 +117,33 @@ uint ActionStreamGetNextTranslation(ActionStream *a, uint index) {
     return index;
 }
 
-void ActionStreamWipeTranslations(ActionStream *a, uint index) {
+void StrokeStreamWipeTranslations(StrokeStream *a, uint index) {
     while (index < MAX_STORED_ACTIONS_LENGTH)   {
         // remove all the translations following the one created as they have now been encorporated
-        ActionRemoveTranslation(a->actions + index);
+        TranslationRemoveTranslation(a->translations + index);
         index++;
     }
 }
 
-void ActionStreamCompileOutput(ActionStream *a, char *output)   {
+void StrokeStreamCompileOutput(StrokeStream *a, char *output)   {
     Outputter o;
     o.attachPrev = false;
     OutputterInit(&o);
     uint i = 0;
     output[0] = '\0';
 
-    OutputterCompileAction(&o, a->actions);
-    strcat(output, a->actions[i].output);
+    OutputterCompileTranslation(&o, a->translations);
+    strcat(output, a->translations[i].output);
 
     for (i += 1; i < MAX_STORED_ACTIONS_LENGTH; i++)  {
-        if (a->actions[i].translation[0] != '\0')   {
-        OutputterPreCompileAction(&o, a->actions + i);
+        if (a->translations[i].translation[0] != '\0')   {
+        OutputterPreCompileTranslation(&o, a->translations + i);
         InOut inOut = {o.spaceString, output + strlen(output)};
         inOut = OutputterOutputSpace(&o, inOut);
         OutputterOutputNull(&o, inOut);
-        OutputterCompileAction(&o, a->actions + i);
+        OutputterCompileTranslation(&o, a->translations + i);
         o.attachPrev = false;
-        strcat(output, a->actions[i].output);
+        strcat(output, a->translations[i].output);
         }
 
 

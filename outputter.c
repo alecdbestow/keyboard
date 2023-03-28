@@ -82,7 +82,7 @@ void OutputterOutputNull(Outputter *o, InOut inOut) {
     inOut.output[0] = '\0';
 }
 
-void OutputterCompileAction(Outputter *o, Action *a)    {
+void OutputterCompileTranslation(Outputter *o, Translation *a)    {
     o->attachPrev = false;
     InOut inOut = {a->translation, a->output};
     while (inOut.input[0] != '\0')   {
@@ -92,7 +92,7 @@ void OutputterCompileAction(Outputter *o, Action *a)    {
 }
 
 //processes only the first commands
-void OutputterPreCompileAction(Outputter *o, Action *a)
+void OutputterPreCompileTranslation(Outputter *o, Translation *a)
 {
     bool oldGlue = o->glue;
     o->glue = false;
@@ -105,8 +105,20 @@ void OutputterPreCompileAction(Outputter *o, Action *a)
     }    
 }
 
+void OutputterOutputAtom(Outputter *o, char *start, char *end)  {
+    if (start[0] == '{')    {
+
+    }   else    {
+
+    }
+}
+
+
+
 void OutputterInit(Outputter *o) {
-    o->spaceString[0] = ' ';
+    o->atom = compileMatchingRegex("(\\\\\\{|\\\\\\}|[^\\{\\}])+|\\{(\\\\\\{|\\\\\\}|[^\\{\\}])*\\}");
+    o->word = compileMatchingRegex("(\\d+([.,]\\d+)+|[\'\\w]+[-\\w\']*|[^\\w\\s]+)\\s*");
+    strcpy(o->spaceString, " ");
     o->capNext = false;
     o->capWord = false;
     o->spaceNext = false;

@@ -3,17 +3,32 @@
 #include "typer.h"
 #include "time.h"
 
-#include "action_stream.h"
+#include "stroke_stream.h"
 #include "keyboard_reader.h"
 #include "stroke.h"
 
+#include "regex/regex.h"
+
 int main() {
+    int length;
+
+    
+    absolute_time_t t1 = get_absolute_time();
+    //re_matchp(regex, "sfdjklhfsadknf dnfhieknjf dfkjfdjhe", &length);
+  
+        
+    
+    
+    //mainn(a.output);
+    absolute_time_t t2 = get_absolute_time();
+    volatile int64_t fdsa = absolute_time_diff_us(t1, t2);
+    volatile int asdf = 0;
     StrokeGetter sg;
     // Initializehigh high high high high high high high high high high high high high high high high high high high high high high high high high high .
     strokeGetterInit(&sg);
 
-    ActionStream a;
-    ActionStreamInit(&a);
+    StrokeStream a;
+    StrokeStreamInit(&a);
 
     char typingString[MAX_OUTPUT_LENGTH] = {0};
 
@@ -25,10 +40,10 @@ int main() {
     bool oldKeyArray[NUM_KEYS] = {0};
     
     //for (int i = 0; i < 20; i++)    {
-        ActionStreamAddStroke(&a, "HAOEU");
+        StrokeStreamAddStroke(&a, "HAOEU");
     //}
-    ActionStreamAddStroke(&a, "-FPL");
-    ActionStreamAddStroke(&a, "HAOEU");
+    StrokeStreamAddStroke(&a, "-FPL");
+    StrokeStreamAddStroke(&a, "HAOEU");
     while (1) {
         tud_task();
         readerGetPressedKeys(keyArray);
@@ -46,7 +61,7 @@ int main() {
             strokeFromKeys(&sg, keyArray);
             if (sg.stroke[0] != '\0')  {
 
-                ActionStreamAddStroke(&a, sg.stroke);
+                StrokeStreamAddStroke(&a, sg.stroke);
                 getStringDiff(a.outputOld, a.output, typingString);
                 sendString(typingString);
 
@@ -66,7 +81,7 @@ int main() {
 #include "pico/stdlib.h"
 #include <stdio.h>
 #include "bsp/board.h"
-#include "action_stream.h"
+#include "stroke_stream.h"
 #include "typer.h"
 
 
@@ -74,31 +89,31 @@ int main() {
     board_led_write(true);
     mainn("asdf");
 
-    ActionStream a;
-    ActionStreamInit(&a);
-    ActionStreamAddStroke(&a, "UPB");
+    StrokeStream a;
+    StrokeStreamInit(&a);
+    StrokeStreamAddStroke(&a, "UPB");
     
-    ActionStreamAddStroke(&a, "SKEFL");
+    StrokeStreamAddStroke(&a, "SKEFL");
     
-    ActionStreamAddStroke(&a, "*EDZ");
-    ActionStreamAddStroke(&a, "W*DZ");
-    ActionStreamAddStroke(&a, "HAOEU");
-    ActionStreamAddStroke(&a, "*EDZ");
-    ActionStreamAddStroke(&a, "W*DZ");
-    ActionStreamAddStroke(&a, "-G");
-    ActionStreamAddStroke(&a, "HAOEU");
-    ActionStreamAddStroke(&a, "STRAO*ET");
-    ActionStreamAddStroke(&a, "HAOEU");
+    StrokeStreamAddStroke(&a, "*EDZ");
+    StrokeStreamAddStroke(&a, "W*DZ");
+    StrokeStreamAddStroke(&a, "HAOEU");
+    StrokeStreamAddStroke(&a, "*EDZ");
+    StrokeStreamAddStroke(&a, "W*DZ");
+    StrokeStreamAddStroke(&a, "-G");
+    StrokeStreamAddStroke(&a, "HAOEU");
+    StrokeStreamAddStroke(&a, "STRAO*ET");
+    StrokeStreamAddStroke(&a, "HAOEU");
     absolute_time_t t1 = get_absolute_time();
-    ActionStreamAddStroke(&a, "HAOEU");
+    StrokeStreamAddStroke(&a, "HAOEU");
     
     
     //mainn(a.output);
     absolute_time_t t2 = get_absolute_time();
     volatile int64_t fdsa = absolute_time_diff_us(t1, t2);
     volatile int asdf = 0;
-    ActionStreamAddStroke(&a, "HEL");
-    ActionStreamAddStroke(&a, "HRO");
+    StrokeStreamAddStroke(&a, "HEL");
+    StrokeStreamAddStroke(&a, "HRO");
     
 
     //sendString("asdf");

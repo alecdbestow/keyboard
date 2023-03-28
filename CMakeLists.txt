@@ -11,6 +11,13 @@ pico_sdk_init()
 #        )
 add_subdirectory(FatFs_SPI)
 add_subdirectory(regex)
+#add_library(regex STATIC)
+#target_sources(regex PUBLIC 
+#    ${CMAKE_CURRENT_LIST_DIR}/re.c
+#)
+#target_link_libraries(regex PUBLIC pico_stdlib)
+
+
 add_library(string_help STATIC)
 target_sources(string_help PUBLIC 
     ${CMAKE_CURRENT_LIST_DIR}/string_help.c
@@ -55,18 +62,18 @@ target_sources(match PUBLIC
 target_link_libraries(match PUBLIC pico_stdlib string_help)
 
 
-add_library(action STATIC)
-target_sources(action PUBLIC 
-    ${CMAKE_CURRENT_LIST_DIR}/action.c
+add_library(translation STATIC)
+target_sources(translation PUBLIC 
+    ${CMAKE_CURRENT_LIST_DIR}/translation.c
 )
-target_link_libraries(action PUBLIC pico_stdlib match stroke)
+target_link_libraries(translation PUBLIC pico_stdlib match stroke)
 
 
 add_library(outputter STATIC)
 target_sources(outputter PUBLIC 
     ${CMAKE_CURRENT_LIST_DIR}/outputter.c
 )
-target_link_libraries(outputter PUBLIC pico_stdlib action match string_help)
+target_link_libraries(outputter PUBLIC pico_stdlib translation match string_help)
 
 
 add_library(meta STATIC)
@@ -76,14 +83,14 @@ target_sources(meta PUBLIC
 target_link_libraries(meta PUBLIC pico_stdlib match)
 
 
-add_library(action_stream STATIC)
-target_include_directories(action_stream PUBLIC 
+add_library(stroke_stream STATIC)
+target_include_directories(stroke_stream PUBLIC 
     ${CMAKE_CURRENT_LIST_DIR}/FatFs_SPI/sd_driver
 )
-target_sources(action_stream PUBLIC 
-    ${CMAKE_CURRENT_LIST_DIR}/action_stream.c
+target_sources(stroke_stream PUBLIC 
+    ${CMAKE_CURRENT_LIST_DIR}/stroke_stream.c
 )
-target_link_libraries(action_stream PUBLIC pico_stdlib dict meta action outputter)
+target_link_libraries(stroke_stream PUBLIC pico_stdlib dict meta translation outputter)
 
 
 
@@ -96,7 +103,7 @@ target_sources(typer PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/typer.c
     ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
 )
-target_link_libraries(typer PUBLIC pico_stdlib tinyusb_device tinyusb_board action_stream)
+target_link_libraries(typer PUBLIC pico_stdlib tinyusb_device tinyusb_board stroke_stream)
 
 
 
@@ -110,6 +117,6 @@ target_include_directories(main PUBLIC
 target_sources(main PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/main.c
 )
-target_link_libraries(main PUBLIC pico_stdlib typer action_stream tinyusb_device tinyusb_board keyboard_reader stroke)
+target_link_libraries(main PUBLIC regex pico_stdlib typer stroke_stream tinyusb_device tinyusb_board keyboard_reader stroke)
 
 pico_add_extra_outputs(main)
