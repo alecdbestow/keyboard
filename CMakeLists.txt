@@ -55,25 +55,19 @@ target_sources(stroke PUBLIC
 )
 target_link_libraries(stroke PUBLIC pico_stdlib)
 
-add_library(match STATIC)
-target_sources(match PUBLIC 
-    ${CMAKE_CURRENT_LIST_DIR}/match.c
-)
-target_link_libraries(match PUBLIC pico_stdlib string_help)
-
 
 add_library(translation STATIC)
 target_sources(translation PUBLIC 
     ${CMAKE_CURRENT_LIST_DIR}/translation.c
 )
-target_link_libraries(translation PUBLIC pico_stdlib match stroke)
+target_link_libraries(translation PUBLIC pico_stdlib stroke)
 
 
 add_library(outputter STATIC)
 target_sources(outputter PUBLIC 
     ${CMAKE_CURRENT_LIST_DIR}/outputter.c
 )
-target_link_libraries(outputter PUBLIC pico_stdlib translation match string_help)
+target_link_libraries(outputter PUBLIC pico_stdlib translation string_help)
 
 
 add_library(meta STATIC)

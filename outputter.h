@@ -30,8 +30,8 @@ InOut OutputterOutputAlpha(Outputter *o, InOut inOut);
 InOut OutputterOutputSpace(Outputter *o, InOut inOut);
 InOut OutputterOutputOnce(Outputter *o, InOut inOut);
 void OutputterOutputNull(Outputter *o, InOut inOut);
-void OutputterCompileTranslation(Outputter *o, Translation *a);
-void  OutputterPreCompileTranslation(Outputter *o, Translation *a);
+void OutputterCompileTranslation(Outputter *o, Translation *t);
+void  OutputterPreCompileTranslation(Outputter *o, Translation *t);
 void  OutputterInit(Outputter *o);
 
 #endif

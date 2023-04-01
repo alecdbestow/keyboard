@@ -82,9 +82,9 @@ void OutputterOutputNull(Outputter *o, InOut inOut) {
     inOut.output[0] = '\0';
 }
 
-void OutputterCompileTranslation(Outputter *o, Translation *a)    {
+void OutputterCompileTranslation(Outputter *o, Translation *t)    {
     o->attachPrev = false;
-    InOut inOut = {a->translation, a->output};
+    InOut inOut = {t->english, t->output};
     while (inOut.input[0] != '\0')   {
         inOut = OutputterOutputOnce(o, inOut);  
     }
@@ -92,11 +92,11 @@ void OutputterCompileTranslation(Outputter *o, Translation *a)    {
 }
 
 //processes only the first commands
-void OutputterPreCompileTranslation(Outputter *o, Translation *a)
+void OutputterPreCompileTranslation(Outputter *o, Translation *t)
 {
     bool oldGlue = o->glue;
     o->glue = false;
-    InOut inOut = {a->translation, a->output};
+    InOut inOut = {t->english, t->output};
     while (inOut.input[0] == COMMAND_START)   {
         inOut = OutputterOutputCommand(o, inOut);  
     }

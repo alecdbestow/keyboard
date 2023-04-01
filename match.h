@@ -13,7 +13,6 @@ typedef struct inOut InOut;
 typedef struct outputter Outputter;
 typedef struct match Match;
 
-typedef InOut (*Func)(Outputter *, Match *, InOut, char);
 
 typedef struct match
 {
@@ -25,7 +24,6 @@ typedef struct match
 } Match;
 
 typedef struct commandMatch  {
-    Func func;
     Match match;
 } CommandMatch;
 

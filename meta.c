@@ -3,6 +3,11 @@
 #include <string.h>
 #include "outputter.h"
 
+static Metas[NUM_MATCHES] = {
+    {.meta = {.matchString = ""}}
+};
+
+
 InOut metaComma(Outputter *o, Match *m, InOut inOut, char order)  {
     if (order == PRE)   {
         inOut.output[0] = inOut.input[1];
@@ -71,4 +76,8 @@ InOut metaRestart(Outputter *o, Match *m, InOut inOut, char order)
     o->capNext = false;
     o->capWord = false;
     o->glue = false;    
+}
+
+void MetasInit(Metas *m)
+{
 }

@@ -1,21 +1,26 @@
 #ifndef _META_H_
 #define _META_H_
 
-#include "match.h"
+#include "formatter.h"
+#include "regex/regex.h"
+
+#define NUM_MATCHES 21
+#define MAX_MATCH_LENGTH 100
+
+typedef void (*Func)(Action *a, ActionHandler *ah);
+void MetaComma();
 
 
-typedef struct match Match;
+typedef struct meta {
+    Regex match;
+    char matchString[MAX_MATCH_LENGTH];
+    Func matchFunction;
+} Meta;
 
-InOut metaComma(Outputter *o, Match *m, InOut inOut, char order);
-InOut metaStop(Outputter *o, Match *m, InOut inOut, char order);
-InOut metaCase(Outputter *o, Match *m, InOut inOut, char order);
-InOut metaGlue(Outputter *o, Match *m, InOut inOut, char order);
-InOut metaAttach(Outputter *o, Match *m, InOut inOut, char order);
-InOut carryCap(Outputter *o, Match *m, InOut inOut, char order);
-InOut metaRestart(Outputter *o, Match *m, InOut inOut, char order);
+typedef Meta Metas[NUM_MATCHES];
 
-
-#define MAX_MATCH_LENGTH 10
+void MetasInit(Metas *m);
+Func MetasGet(Metas *m, Action *a);
 
 
 
