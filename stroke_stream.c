@@ -7,7 +7,7 @@
 //  W        W     W  W
 
 
-#define ACTIONS_END MAX_STORED_TRANSLATIONS_LENGTH - 1
+#define TRANSLATIONS_END MAX_STORED_TRANSLATIONS_LENGTH - 1
 
 
 void StrokeStreamInit(StrokeStream *ss)  {
@@ -17,10 +17,10 @@ void StrokeStreamInit(StrokeStream *ss)  {
     }
     ss->output[0] = '\0';
     ss->outputOld[0] = '\0';
-    //ss->end = ACTIONS_END;
+    FormatterInit(&(ss->formatter));
 }
 
-//
+
 void StrokeStreamGetCombinedStrokes(StrokeStream *ss, char* strokes, uint start)  {
     strcpy(strokes, ss->translations[start].stroke);
     for (start++; start < MAX_STORED_TRANSLATIONS_LENGTH; start++)    {
@@ -29,15 +29,26 @@ void StrokeStreamGetCombinedStrokes(StrokeStream *ss, char* strokes, uint start)
     }
 }
 
+void StrokeStreamShiftTranslationsDown(StrokeStream *ss)    {
+    // shift all the translations down
+    for (uint i = 0; i < TRANSLATIONS_END; i++)    {
+        TranslationCopy(ss->translations + i, ss->translations + i + 1);
+    }
+    TranslationInit(ss->translations + TRANSLATIONS_END);
+}
+
 // add a stroke to the translation stream and compile the output
 // This is the main input function for the translation stream
 void StrokeStreamAddStroke(StrokeStream *ss, Stroke stroke)   {
 
-    for (uint i = 0; i < ACTIONS_END; i++)    {
-        TranslationCopy(ss->translations + i, ss->translations + i + 1);
+    if (strcmp(stroke, "*") == 0)  {
+        StrokeStreamUndo(ss);
+        return;
     }
-    TranslationInit(ss->translations + ACTIONS_END);
-    strcpy(ss->translations[ACTIONS_END].stroke, stroke);
+    StrokeStreamShiftTranslationsDown(ss);
+
+    //copy accross the stroke to init it
+    strcpy(ss->translations[TRANSLATIONS_END].stroke, stroke);
         
     // compile the output and save it to oldOutput
     // needed to calculate the difference between the strings for typing
@@ -49,48 +60,58 @@ void StrokeStreamAddStroke(StrokeStream *ss, Stroke stroke)   {
  
     StrokeStreamSearchForStroke(ss, index);
     // compile with the new stroke added
+    absolute_time_t t1 = get_absolute_time();
     StrokeStreamCompileOutput(ss, ss->output);
-
+            absolute_time_t t2 = get_absolute_time();
+    volatile int64_t fdsa = absolute_time_diff_us(t1, t2);
 }
-/*
-void StrokeStreamUndo(StrokeStream * a)
-{
-    Translation *index = ss->end;
 
+void StrokeStreamUndo(StrokeStream * ss)
+{
     Stroke history[MAX_NUM_STROKES] = {0};
     uint numStrokes = 0;
 
-    StrokeStreamCompileOutput(ss);
-    strcpy(ss->outputOld, ss->output);
+    StrokeStreamCompileOutput(ss, ss->outputOld);
 
+    // copy the translations into history until you hit a translation with a non zero .english
     while (numStrokes < MAX_NUM_STROKES) {
-        ss->end = ss->end->prevTranslation;
-        strcpy(history[numStrokes], index->stroke);
-        index->stroke[0] = '\0';
-        index->translation[0] = '\0';
-        if (index->length > 0) {
-            index->length = 0;
+        if (ss->translations[TRANSLATIONS_END -numStrokes].english[0] != '\0')   {
+            strcpy(history[numStrokes], ss->translations[TRANSLATIONS_END -numStrokes].english);
+            numStrokes++;
             break;
         }
+        strcpy(history[numStrokes], ss->translations[TRANSLATIONS_END -numStrokes].english);
         numStrokes++;
-        index = index->prevTranslation;
-        
     }
-    while (numStrokes >= 1) {
-        ss->end = ss->end->nextTranslation;
-        strcpy(ss->end->stroke, history[numStrokes]);
-        StrokeStreamSearchForStroke(ss, ss->end, history[numStrokes]);
-        numStrokes--;
+    // shift all the translations up
+    for (uint i = 0; i <= TRANSLATIONS_END - numStrokes; i++)    {
+        TranslationCopy(ss->translations + i + numStrokes, ss->translations + i );
     }
-    StrokeStreamCompileOutput(ss);
+
+    // remove the translations at the beginning
+    for (uint i = 0; i < numStrokes; i++)    {
+        TranslationInit(ss->translations + i);
+    }
+
+    // add strokes back in one by one and shift down the translations each time
+    while (numStrokes > 1) {
+        uint index = MAX_STORED_TRANSLATIONS_LENGTH - MAX_NUM_STROKES;
+        index = StrokeStreamGetNextTranslation(ss, index);
+        StrokeStreamShiftTranslationsDown(ss);
+        strcpy(ss->translations[TRANSLATIONS_END].stroke, history[numStrokes]);
+        StrokeStreamSearchForStroke(ss, index);
+    }
+
+    // compile the new output with the one fewer stroke
+    StrokeStreamCompileOutput(ss, ss->output);
 }
-*/
+
 void StrokeStreamSearchForStroke(StrokeStream *ss, uint index) {
     //check all the strokes for translation
     char translation[MAX_TRANSLATION_LENGTH];
     char combinedStrokes[NUM_STENO_CHARS * MAX_NUM_STROKES];
     while (index < MAX_STORED_TRANSLATIONS_LENGTH)   {
-        if (ss->translations[index].english[0] != '\0' || index == ACTIONS_END)  {
+        if (ss->translations[index].english[0] != '\0' || index == TRANSLATIONS_END)  {
 
             StrokeStreamGetCombinedStrokes(ss, combinedStrokes, index);
             getTranslation(&(ss->d), combinedStrokes, translation);
@@ -104,11 +125,11 @@ void StrokeStreamSearchForStroke(StrokeStream *ss, uint index) {
         index++;
     }
     // if no translations are found, then output the stroke instead
-    strcpy(ss->translations[ACTIONS_END].english, ss->translations[ACTIONS_END].stroke);
+    strcpy(ss->translations[TRANSLATIONS_END].english, ss->translations[TRANSLATIONS_END].stroke);
 }
 
 uint StrokeStreamGetNextTranslation(StrokeStream *ss, uint index) {
-    while (index < ACTIONS_END) {
+    while (index < TRANSLATIONS_END) {
         if (ss->translations[index].english[0] != '\0') {
             break;
         }
@@ -126,27 +147,5 @@ void StrokeStreamWipeTranslations(StrokeStream *ss, uint index) {
 }
 
 void StrokeStreamCompileOutput(StrokeStream *ss, char *output)   {
-    Outputter o;
-    o.attachPrev = false;
-    OutputterInit(&o);
-    uint i = 0;
-    output[0] = '\0';
-
-    OutputterCompileTranslation(&o, ss->translations);
-    strcat(output, ss->translations[i].output);
-
-    for (i += 1; i < MAX_STORED_TRANSLATIONS_LENGTH; i++)  {
-        if (ss->translations[i].english[0] != '\0')   {
-        OutputterPreCompileTranslation(&o, ss->translations + i);
-        InOut inOut = {o.spaceString, output + strlen(output)};
-        inOut = OutputterOutputSpace(&o, inOut);
-        OutputterOutputNull(&o, inOut);
-        OutputterCompileTranslation(&o, ss->translations + i);
-        o.attachPrev = false;
-        strcat(output, ss->translations[i].output);
-        }
-
-
-
-    }
+    FormatterDo(&(ss->formatter), ss->translations, output);
 }

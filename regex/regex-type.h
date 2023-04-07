@@ -15,7 +15,7 @@ typedef struct {
     };
 } RegexStateTransition;
 
-#define REGEX_NUM_CHARS 256
+#define REGEX_NUM_CHARS 150
 
 typedef struct {
     int num_states;

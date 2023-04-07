@@ -5,7 +5,7 @@
 #include "stroke.h"
 #include "dictionary.h"
 #include "translation.h"
-#include "outputter.h"
+#include "formatter.h"
 
 
 #define MAX_STORED_TRANSLATIONS_LENGTH 20
@@ -16,8 +16,9 @@ typedef struct stroke_stream
 {
     Translation translations[MAX_STORED_TRANSLATIONS_LENGTH];
     Dictionary d;
-    char outputOld[MAX_OUTPUT_LENGTH];
-    char output[MAX_OUTPUT_LENGTH];
+    char outputOld[1000];
+    char output[1000];
+    Formatter formatter;
 
     
 } StrokeStream;

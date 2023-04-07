@@ -76,20 +76,20 @@ void sendString(char *s) {
 
       if (tud_hid_ready()) {
 
-          if (pressed) {
-              
-              tud_hid_keyboard_report(0, 0, NULL);
-              if (string[0] == '\0')  {
-                return;
-              }
-              pressed = false;
-          } else{
-              getCode(string[0], keycodes);
-              modifier = getModifier(string[0]);
-              tud_hid_keyboard_report(0, modifier, keycodes);
-              string++;
-              pressed = true;
-          }
+        if (pressed) {
+            
+            tud_hid_keyboard_report(0, 0, NULL);
+            if (string[0] == '\0')  {
+              return;
+            }
+            pressed = false;
+        } else{
+            getCode(string[0], keycodes);
+            modifier = getModifier(string[0]);
+            tud_hid_keyboard_report(0, modifier, keycodes);
+            string++;
+            pressed = true;
+        }
       }
       i++;
   }

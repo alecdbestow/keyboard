@@ -16,7 +16,6 @@ void TranslationCopy(Translation *dest, const Translation *source)
 {
     strcpy(dest->english, source->english);
     strcpy(dest->stroke, source->stroke);
-    strcpy(dest->output, source->output);
 }
 
 void TranslationAddEnglish(Translation *a, char *e)
@@ -31,5 +30,4 @@ void TranslationRemoveStroke(Translation *a)  {
 void TranslationRemoveTranslation(Translation *a)
 {
     a->english[0] = '\0';
-    a->output[0] = '\0';
 }

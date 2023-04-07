@@ -1,83 +1,136 @@
 #include "meta.h"
+#include "formatter.h"
 #include <ctype.h>
 #include <string.h>
-#include "outputter.h"
 
-static Metas[NUM_MATCHES] = {
-    {.meta = {.matchString = ""}}
+
+static Regex regex;
+static const char *matchStrings[] = {
+    "\\{[,:;]\\}",
+    "\\{[\\.\\!\\?]\\}",
+    "\\{-\\|\\}",
+    "\\{>\\}",
+    "\\{<\\}",
+    "\\{\\*-\\|\\}",
+    "\\{\\*>\\}",
+    "\\{\\*<\\}",
+    "\\{\\&.*\\}", 
+    "\\{\\^\\}",
+    "\\{\\^.+\\^\\}",
+    "\\{\\^.+\\}",
+    "\\{.+\\^\\}"
 };
 
+static const Func matchFuncs[] =    {
+    MetaComma,
+    MetaStop,
+    MetaCapFirstWord,
+    MetaLowerFirstChar,
+    MetaUpperFirstWord,
+    MetaRetroCapFirstWord,
+    MetaRetroLowerFirstChar,
+    MetaRetroUpperFirstWord,
+    MetaGlue,
+    MetaPrevAttach,
+    MetaBothAttachOrthography,
+    MetaPrevAttachOrthography,
+    MetaNextAttachOrthography,
+};
 
-InOut metaComma(Outputter *o, Match *m, InOut inOut, char order)  {
-    if (order == PRE)   {
-        inOut.output[0] = inOut.input[1];
-        inOut.output++;
-    }   else    {
-        inOut = metaAttach(o, m, inOut, order);
-        o->spaceNext = true;
-    }
-    return inOut;
+void MetaComma(Action *a, ActionHandler *ah)    {
+    a->prevAttach = true;
+    a->output[0] = a->text[1];
+    a->output[1] = '\0';
 }
 
-
-InOut metaStop(Outputter *o, Match *m, InOut inOut, char order)    {
-    if (order == PRE)   {
-        inOut.output[0] = inOut.input[1];
-        inOut.output++;
-    }   else    {
-        inOut = metaAttach(o, m, inOut, order);
-        o->capNext = true;
-    }
-    return inOut;
-}
-
-InOut metaCase(Outputter *o, Match *m, InOut inOut, char order) {
-    if (order == PRE)   {
-        inOut = metaAttach(o, m, inOut, order);
-        if (m->arg == CAP_FIRST_WORD)  {
-            o->capNext = true;
-            o->lowerNext = false;
-
-        }   else if (m->arg == LOWER_FIRST_CHAR)   {
-            o->capNext = false;
-            o->lowerNext = true;  
-
-        }   else    {
-            o->capWord = true;
-        }        
-    }
-
-}
-
-InOut metaGlue(Outputter *o, Match *m, InOut inOut, char order) {
-    if (order == POST)  {
-        o->glue = true;
+void MetaStop(Action *a, ActionHandler *ah) {
+    a->prevAttach = true;
+    a->output[0] = a->text[1];
+    a->output[1] = '\0';
+    Action *nextAction = ActionHandlerNextAction(ah);
+    if (nextAction) {
+        nextAction->capFirstChar = true;
     }
 }
 
-InOut metaAttach(Outputter *o, Match *m, InOut inOut, char order)   {
-    if (order == POST)   {
-        if (m->arg == ATTACH_LEFT)  {
-            o->attachPrev = true;
-        }   else    {
-            o->attachNext = true;
-        }
-        
+void MetaCapFirstWord(Action *a, ActionHandler *ah) {
+    a->capFirstChar = true;
+}
+
+void MetaLowerFirstChar(Action *a, ActionHandler *ah)   {
+    a->lowerFirstChar = true;
+}
+
+void MetaUpperFirstWord(Action *a, ActionHandler *ah)   {
+    a->upperFirstWord = true;
+}
+
+void MetaRetroCapFirstWord(Action *a, ActionHandler *ah)    {
+    a->capPrevWordFirstChar = true;
+}
+
+void MetaRetroLowerFirstChar(Action *a, ActionHandler *ah)  {
+    a->lowerPrevWordFirstChar = true;
+}
+
+void MetaRetroUpperFirstWord(Action *a, ActionHandler *ah)  {
+    a->lowerPrevWordFirstChar = true;
+}
+
+void MetaGlue(Action *a, ActionHandler *ah) {
+    a->glue = true;
+    Action *prevAction = ActionHandlerPrevAction(ah);
+    if (prevAction && prevAction->glue)   {
+        a->prevAttach = true;
+    }
+    strncpy(a->output, a->text + 2, a->length - 3);
+}
+
+void MetaPrevAttach(Action *a, ActionHandler *ah)   { 
+    a->prevAttach = true;
+    Action *nextAction = ActionHandlerNextAction(ah);
+    if (nextAction)   {
+        a->prevAttach = true;
     }
 }
 
-InOut carryCap(Outputter *o, Match *m, InOut inOut, char order)    {
-
+void MetaBothAttachOrthography(Action *a, ActionHandler *ah)    {
+    a->prevAttach = true;
+    a->nextAttach = true;
+    a->orthography = true;
+    strncpy(a->output, a->text + 2, a->length - 4);
+    a->output[a->length - 4] = '\0';
 }
 
-InOut metaRestart(Outputter *o, Match *m, InOut inOut, char order)
+void MetaPrevAttachOrthography(Action *a, ActionHandler *ah)    {
+    a->prevAttach = true;
+    a->orthography = true;
+    strncpy(a->output, a->text + 2, a->length - 3);
+    a->output[a->length - 3] = '\0';
+}
+
+void MetaNextAttachOrthography(Action *a, ActionHandler *ah)    {
+    a->nextAttach = true;
+    a->orthography = true;
+    strncpy(a->output, a->text + 1, a->length - 3);
+    a->output[a->length - 3] = '\0';
+}
+
+void MetasInit()
 {
-    o->attachNext = false;
-    o->capNext = false;
-    o->capWord = false;
-    o->glue = false;    
+
+    regex = compileMultiMatchingRegex(NUM_MATCHES, matchStrings);
 }
 
-void MetasInit(Metas *m)
+Func MetasGet(Action *a)
 {
+    int exitNum = -1;
+    startsWithRegexN(regex, a->text, MAX_MATCH_LENGTH, &(a->length), &exitNum);
+    if (exitNum == -1)  {
+        return NULL;
+    }   else    {
+        return matchFuncs[exitNum];
+    }
+    
 }
+

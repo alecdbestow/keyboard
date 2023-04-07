@@ -3,6 +3,7 @@ include(pico_sdk_import.cmake)
 project(test_project C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
+
 pico_sdk_init()
 
 
@@ -11,11 +12,6 @@ pico_sdk_init()
 #        )
 add_subdirectory(FatFs_SPI)
 add_subdirectory(regex)
-#add_library(regex STATIC)
-#target_sources(regex PUBLIC 
-#    ${CMAKE_CURRENT_LIST_DIR}/re.c
-#)
-#target_link_libraries(regex PUBLIC pico_stdlib)
 
 
 add_library(string_help STATIC)
@@ -56,25 +52,32 @@ target_sources(stroke PUBLIC
 target_link_libraries(stroke PUBLIC pico_stdlib)
 
 
+
+
+
 add_library(translation STATIC)
 target_sources(translation PUBLIC 
     ${CMAKE_CURRENT_LIST_DIR}/translation.c
 )
 target_link_libraries(translation PUBLIC pico_stdlib stroke)
 
-
-add_library(outputter STATIC)
-target_sources(outputter PUBLIC 
-    ${CMAKE_CURRENT_LIST_DIR}/outputter.c
+add_library(formatter STATIC)
+target_sources(formatter PUBLIC 
+    ${CMAKE_CURRENT_LIST_DIR}/formatter.c
 )
-target_link_libraries(outputter PUBLIC pico_stdlib translation string_help)
-
+target_link_libraries(formatter PUBLIC 
+    pico_stdlib 
+    regex 
+    stroke_stream 
+    translation 
+    meta
+)
 
 add_library(meta STATIC)
 target_sources(meta PUBLIC 
     ${CMAKE_CURRENT_LIST_DIR}/meta.c
 )
-target_link_libraries(meta PUBLIC pico_stdlib match)
+target_link_libraries(meta PUBLIC pico_stdlib formatter regex)
 
 
 add_library(stroke_stream STATIC)
@@ -84,7 +87,14 @@ target_include_directories(stroke_stream PUBLIC
 target_sources(stroke_stream PUBLIC 
     ${CMAKE_CURRENT_LIST_DIR}/stroke_stream.c
 )
-target_link_libraries(stroke_stream PUBLIC pico_stdlib dict meta translation outputter)
+target_link_libraries(stroke_stream PUBLIC 
+    pico_stdlib 
+    dict 
+    meta 
+    stroke
+    translation 
+    formatter
+)
 
 
 

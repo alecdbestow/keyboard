@@ -5,13 +5,10 @@
 
 #define MAX_TRANSLATION_LENGTH 100
 
-typedef char Output[MAX_TRANSLATION_LENGTH];
-
 typedef struct translation
 {
     Stroke stroke;
     char english[MAX_TRANSLATION_LENGTH];
-    Output output;
 } Translation;
 
 void TranslationOutput(Translation *a);
